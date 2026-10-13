@@ -1,4 +1,4 @@
-# Semaine en équilibre
+# Semaine pour Guyane
 
 Un planning hebdomadaire du lundi au dimanche, pour organiser l’école, le travail, le sport, les moments spirituels et les autres activités.
 
