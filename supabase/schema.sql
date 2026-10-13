@@ -80,28 +80,53 @@ create policy "Members can view shared events"
   on public.events for select to authenticated
   using (public.is_plan_member(plan_id));
 
-create policy "Owners add schedule; partners propose sport"
+create policy "Creator proposes sport; invited partner manages schedule"
   on public.events for insert to authenticated
   with check (
     created_by = auth.uid()
     and public.is_plan_member(plan_id)
     and (
-      public.is_plan_owner(plan_id)
-      or (category = 'sport' and status = 'proposed')
+      (
+        public.is_plan_owner(plan_id)
+        and category = 'sport'
+        and status = 'proposed'
+      )
+      or (
+        not public.is_plan_owner(plan_id)
+        and (
+          (category in ('school', 'work', 'travel', 'spiritual') and status = 'scheduled')
+          or (category = 'sport' and status in ('scheduled', 'accepted'))
+        )
+      )
     )
   );
 
-create policy "Owners manage events"
+create policy "Invited partner manages schedule and decisions"
   on public.events for update to authenticated
-  using (public.is_plan_owner(plan_id))
-  with check (public.is_plan_owner(plan_id));
+  using (public.is_plan_member(plan_id) and not public.is_plan_owner(plan_id))
+  with check (public.is_plan_member(plan_id) and not public.is_plan_owner(plan_id));
 
-create policy "Owners or proposers remove events"
-  on public.events for delete to authenticated
+create policy "Creator edits own sport proposals"
+  on public.events for update to authenticated
   using (
     public.is_plan_owner(plan_id)
+    and created_by = auth.uid()
+    and category = 'sport'
+    and status = 'proposed'
+  )
+  with check (
+    public.is_plan_owner(plan_id)
+    and created_by = auth.uid()
+    and category = 'sport'
+    and status = 'proposed'
+  );
+
+create policy "Invited partner removes schedule; creator withdraws proposals"
+  on public.events for delete to authenticated
+  using (
+    (public.is_plan_member(plan_id) and not public.is_plan_owner(plan_id))
     or (
-      public.is_plan_member(plan_id)
+      public.is_plan_owner(plan_id)
       and created_by = auth.uid()
       and category = 'sport'
       and status = 'proposed'
