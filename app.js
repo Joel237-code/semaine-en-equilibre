@@ -4,10 +4,10 @@
   const STORAGE_KEY = "semaine-en-equilibre.events.v1";
   const categories = {
     school: { label: "École", className: "school" },
-    travel: { label: "Voyage", className: "travel" },
+    work: { label: "Travail", className: "work" },
     spiritual: { label: "Spirituel", className: "spiritual" },
     sport: { label: "Sport", className: "sport" },
-    work: { label: "Travail", className: "work" }
+    other: { label: "Autre activité", className: "other" }
   };
   const dayNames = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
@@ -15,6 +15,15 @@
     weekLabel: document.querySelector("#week-label"),
     grid: document.querySelector("#week-grid"),
     dialog: document.querySelector("#event-dialog"),
+    shareOutput: document.querySelector("#share-output"),
+    shareLink: document.querySelector("#share-link"),
+    shareMessage: document.querySelector("#share-message"),
+    shareNotice: document.querySelector("#share-notice"),
+    storageLabel: document.querySelector("#storage-label"),
+    previousWeek: document.querySelector("#previous-week"),
+    nextWeek: document.querySelector("#next-week"),
+    currentWeek: document.querySelector("#current-week"),
+    leaveShared: document.querySelector("#leave-shared"),
     form: document.querySelector("#event-form"),
     formTitle: document.querySelector("#form-title"),
     eventId: document.querySelector("#event-id"),
@@ -29,38 +38,142 @@
     delete: document.querySelector("#delete-event"),
     counts: {
       school: document.querySelector("#school-count"),
-      travel: document.querySelector("#travel-count"),
+      work: document.querySelector("#work-count"),
       spiritual: document.querySelector("#spirit-count"),
       sport: document.querySelector("#sport-count"),
-      work: document.querySelector("#work-count")
+      other: document.querySelector("#other-count")
     }
   };
 
-  let events = loadEvents();
-  let weekStart = mondayOf(new Date());
+  const sharedSnapshot = readSharedSnapshot();
+  const sharedMode = Boolean(sharedSnapshot);
+  const sharedDraftKey = sharedSnapshot ? `${STORAGE_KEY}.shared.${sharedSnapshot.encoded}` : "";
+  let events = sharedSnapshot
+    ? loadEvents(sharedDraftKey, sharedSnapshot.events)
+    : loadEvents();
+  let weekStart = sharedSnapshot ? parseDate(sharedSnapshot.week) : mondayOf(new Date());
   let activeFilter = "all";
 
-  function loadEvents() {
+  function loadEvents(storageKey = STORAGE_KEY, fallback = []) {
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-      return Array.isArray(saved) ? saved.filter(isValidEvent) : [];
+      const raw = localStorage.getItem(storageKey);
+      const saved = raw === null ? fallback : JSON.parse(raw);
+      if (!Array.isArray(saved)) return [];
+      return saved
+        .map((event) => event?.category === "travel" ? { ...event, category: "other" } : event)
+        .filter(isValidEvent);
     } catch {
       return [];
     }
   }
 
+  function isValidDateKey(value) {
+    if (typeof value !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false;
+    const parsed = parseDate(value);
+    return Number.isFinite(parsed.getTime()) && dateKey(parsed) === value;
+  }
+
   function isValidEvent(event) {
-    return event && typeof event.id === "string" &&
-      typeof event.title === "string" && typeof event.date === "string" &&
-      Object.hasOwn(categories, event.category);
+    return Boolean(event) &&
+      typeof event.id === "string" && event.id.length <= 80 &&
+      typeof event.title === "string" && event.title.trim().length > 0 && event.title.length <= 80 &&
+      isValidDateKey(event.date) &&
+      Object.hasOwn(categories, event.category) &&
+      /^\\d{2}:\\d{2}$/.test(event.start) &&
+      /^\\d{2}:\\d{2}$/.test(event.end) &&
+      event.end > event.start &&
+      (event.location === undefined || (typeof event.location === "string" && event.location.length <= 100)) &&
+      (event.note === undefined || (typeof event.note === "string" && event.note.length <= 240));
+  }
+
+  function readSharedSnapshot() {
+    const match = location.hash.match(/^#share=([A-Za-z0-9_-]+)$/);
+    if (!match) return null;
+    try {
+      const base64 = match[1].replace(/-/g, "+").replace(/_/g, "/");
+      const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+      const bytes = Uint8Array.from(atob(padded), (character) => character.charCodeAt(0));
+      const payload = JSON.parse(new TextDecoder().decode(bytes));
+      if (payload.version !== 1 || !isValidDateKey(payload.week)) return null;
+      const start = mondayOf(parseDate(payload.week));
+      if (dateKey(start) !== payload.week || !Array.isArray(payload.events) || payload.events.length > 100) return null;
+      const end = dateKey(addDays(start, 6));
+      const validEvents = payload.events
+        .map((event) => event?.category === "travel" ? { ...event, category: "other" } : event)
+        .filter((event) => isValidEvent(event) && event.date >= payload.week && event.date <= end);
+      return { week: payload.week, events: validEvents, encoded: match[1] };
+    } catch {
+      return null;
+    }
   }
 
   function saveEvents() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+      localStorage.setItem(sharedMode ? sharedDraftKey : STORAGE_KEY, JSON.stringify(events));
+      if (sharedMode) {
+        els.shareOutput.hidden = true;
+        els.shareNotice.textContent = "Tes changements restent dans cette copie sur cet appareil. Crée un nouveau lien pour les transmettre.";
+      }
     } catch {
       els.error.textContent = "Le navigateur n’a pas pu enregistrer les changements.";
     }
+  }
+
+  function buildShareUrl() {
+    const weekEnd = addDays(weekStart, 6);
+    const weekEvents = events.filter((event) => {
+      const date = parseDate(event.date);
+      return date >= weekStart && date <= weekEnd;
+    });
+    const payload = {
+      version: 1,
+      week: dateKey(weekStart),
+      events: weekEvents
+    };
+    const bytes = new TextEncoder().encode(JSON.stringify(payload));
+    let binary = "";
+    for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+      binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+    }
+    const encoded = btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_").replace(/=+$/g, "");
+    return `${location.origin}${location.pathname}#share=${encoded}`;
+  }
+
+  async function shareWeek() {
+    const url = buildShareUrl();
+    if (url.length > 8000) {
+      els.shareMessage.textContent = "Le lien est trop long. Retire les notes et lieux facultatifs avant de partager.";
+      els.shareOutput.hidden = false;
+      els.shareLink.value = "";
+      return;
+    }
+    els.shareLink.value = url;
+    els.shareOutput.hidden = false;
+    try {
+      await navigator.clipboard.writeText(url);
+      els.shareMessage.textContent = "Lien copié. Envoie-le en privé à la personne avec qui tu partages cette semaine.";
+    } catch {
+      els.shareMessage.textContent = "Copie ce lien et envoie-le en privé. Toute personne qui le reçoit peut voir la semaine.";
+      els.shareLink.focus();
+      els.shareLink.select();
+    }
+  }
+
+  async function copyShareLink() {
+    if (!els.shareLink.value) return;
+    try {
+      await navigator.clipboard.writeText(els.shareLink.value);
+      els.shareMessage.textContent = "Lien copié. Envoie-le en privé.";
+    } catch {
+      els.shareLink.focus();
+      els.shareLink.select();
+      els.shareMessage.textContent = "Sélectionne le lien, puis copie-le.";
+    }
+  }
+
+  function leaveSharedCopy() {
+    history.replaceState(null, "", location.pathname);
+    location.reload();
   }
 
   function mondayOf(date) {
@@ -96,6 +209,12 @@
 
   function render() {
     els.weekLabel.textContent = formatWeek(weekStart);
+    els.storageLabel.textContent = sharedMode ? "Copie partagée" : "Enregistré sur cet appareil";
+    els.previousWeek.disabled = sharedMode;
+    els.nextWeek.disabled = sharedMode;
+    els.currentWeek.hidden = sharedMode;
+    els.leaveShared.hidden = !sharedMode;
+    els.shareNotice.hidden = !sharedMode;
     renderSummary();
     renderDays();
   }
@@ -278,6 +397,9 @@
     weekStart = mondayOf(new Date());
     render();
   });
+  els.leaveShared.addEventListener("click", leaveSharedCopy);
+  document.querySelector("#share-week").addEventListener("click", shareWeek);
+  document.querySelector("#copy-share-link").addEventListener("click", copyShareLink);
   document.querySelector("#open-form").addEventListener("click", openNewForm);
   document.querySelector("#close-form").addEventListener("click", closeForm);
   document.querySelector("#cancel-form").addEventListener("click", closeForm);
