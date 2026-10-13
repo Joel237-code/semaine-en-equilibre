@@ -6,7 +6,8 @@
     school: { label: "École", className: "school" },
     travel: { label: "Voyage", className: "travel" },
     spiritual: { label: "Spirituel", className: "spiritual" },
-    sport: { label: "Sport", className: "sport" }
+    sport: { label: "Sport", className: "sport" },
+    work: { label: "Travail", className: "work" }
   };
   const dayNames = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
@@ -30,7 +31,8 @@
       school: document.querySelector("#school-count"),
       travel: document.querySelector("#travel-count"),
       spiritual: document.querySelector("#spirit-count"),
-      sport: document.querySelector("#sport-count")
+      sport: document.querySelector("#sport-count"),
+      work: document.querySelector("#work-count")
     }
   };
 
