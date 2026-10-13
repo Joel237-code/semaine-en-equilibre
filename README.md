@@ -1,27 +1,21 @@
 # Semaine pour Guyane
 
-Un planning hebdomadaire du lundi au dimanche, pour organiser l’école, le travail, le sport, les moments spirituels et les autres activités.
+Planning hebdomadaire partagé du lundi au dimanche, avec horaires d’école, travail, sport, spiritualité et autres activités.
 
-## Fonctionnalités
+## Fonctionnement
 
-- Parcourir les semaines et revenir à la semaine en cours.
-- Ajouter, modifier et supprimer des activités.
-- Catégories : École, Travail, Sport, Spirituel et Autre activité.
-- Partager une copie de la semaine affichée avec un lien.
-- S’adapter aux téléphones et aux ordinateurs.
+- Parcourir les semaines avec les flèches ; les activités restent associées à leurs dates.
+- Les comptes autorisés retrouvent le même planning sur leurs appareils.
+- Les activités sont stockées dans Supabase ; l’application reste publiée sur GitHub Pages.
+- Les activités présentes dans le stockage local peuvent être importées depuis le navigateur qui les contient.
 
-## Partage et confidentialité
+## Configuration Supabase
 
-Les activités sont conservées dans le stockage local de chaque navigateur. Il n’y a pas de base de données ni de synchronisation automatique.
+Le frontend utilise l’URL du projet et une clé publishable. La clé secret/service_role ne doit jamais être placée dans le code public.
 
-Le bouton **Partager cette semaine** fabrique un lien contenant une copie des activités de la semaine affichée. La personne qui ouvre le lien peut consulter et modifier cette copie dans son navigateur, puis créer un nouveau lien pour transmettre les changements. Pour se renvoyer une version modifiée, partagez le nouveau lien en privé.
+La base utilise les tables `planners`, `planner_members` et `activities`, protégées par Row Level Security. Chaque compte doit être membre du planning. Après création des comptes, ajoute leurs identifiants à `planner_members` dans le SQL Editor.
 
-Le lien n’est pas chiffré : toute personne qui le reçoit peut lire les activités qu’il contient. Il inclut aussi les lieux et notes éventuels. Évite donc d’y mettre des informations que tu ne veux pas partager, et n’envoie le lien qu’à la personne concernée. Le fragment du lien (après `#share=`) n’est pas envoyé au serveur d’hébergement lors du chargement de la page.
-
-Le code du dépôt est public. N’y ajoute pas de vrais horaires ou d’autres informations personnelles.
-
-## Publication
-
-GitHub Pages publie automatiquement le contenu de la branche `main`, depuis la racine du dépôt.
+Ajoute l’URL GitHub Pages aux URL de redirection autorisées de Supabase :
+`https://joel237-code.github.io/semaine-en-equilibre/`
 
 Site : <https://joel237-code.github.io/semaine-en-equilibre/>
