@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=4">
-  <script src="app.js?v=3" defer></script>
+  <script type="module" src="app.js?v=4"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -19,10 +19,21 @@
         <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
         <span>Semaine <em>pour Guyane</em></span>
       </a>
-      <span class="local-badge"><span class="status-dot"></span><span id="storage-label">Enregistré sur cet appareil</span></span>
+      <div class="account-controls"><span class="local-badge"><span class="status-dot"></span><span id="storage-label">Connexion requise</span></span><button class="account-button" id="sign-out" type="button" hidden>Se déconnecter</button></div>
     </header>
 
     <main>
+      <section class="auth-panel" id="auth-panel">
+        <div class="auth-copy"><p class="eyebrow">PLANNING PARTAGÉ</p><h1>Connecte-toi à<br><span>ton planning.</span></h1><p class="intro-text">Retrouve la même semaine depuis tes appareils. Chaque compte autorisé partage le même planning.</p></div>
+        <form class="auth-form" id="auth-form" novalidate>
+          <label class="field-label" for="auth-email">Adresse e-mail</label><input class="text-input" id="auth-email" type="email" autocomplete="email" required>
+          <label class="field-label" for="auth-password">Mot de passe</label><input class="text-input" id="auth-password" type="password" autocomplete="current-password" minlength="8" required>
+          <div class="auth-actions"><button class="save-button" id="sign-in" type="button">Se connecter</button><button class="cancel-button" id="sign-up" type="button">Créer un compte</button></div>
+          <p class="form-error" id="auth-message" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+      <section class="setup-panel" id="setup-panel" hidden><p class="eyebrow">COMPTE CONNECTÉ</p><h1>Encore une petite étape.</h1><p id="setup-message">Ce compte n’est pas encore relié au planning partagé.</p><button class="today-button" id="retry-planner" type="button">Réessayer</button></section>
+      <div id="planner-app" hidden>
       <section class="intro">
         <div class="intro-copy">
           <p class="eyebrow">TON ESPACE, TON RYTHME</p>
@@ -82,8 +93,9 @@
           </div>
         </div>
         <div class="week-grid" id="week-grid" aria-live="polite"></div>
-        <p class="privacy-note"><span aria-hidden="true">◈</span> Les activités restent sur cet appareil. Un lien partagé contient une copie de la semaine, visible par toute personne qui le reçoit.</p>
+        <p class="privacy-note"><span aria-hidden="true">◈</span> Les activités sont synchronisées dans le cloud pour les comptes autorisés. Un lien de copie reste visible par toute personne qui le reçoit.</p>
       </section>
+      </div>
     </main>
 
     <footer><span>Prends le temps de faire de la place pour toi.</span><span class="footer-sparkle">✳</span></footer>
