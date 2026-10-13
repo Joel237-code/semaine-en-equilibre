@@ -68,7 +68,7 @@
   }
 
   function isValidDateKey(value) {
-    if (typeof value !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false;
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
     const parsed = parseDate(value);
     return Number.isFinite(parsed.getTime()) && dateKey(parsed) === value;
   }
@@ -79,8 +79,8 @@
       typeof event.title === "string" && event.title.trim().length > 0 && event.title.length <= 80 &&
       isValidDateKey(event.date) &&
       Object.hasOwn(categories, event.category) &&
-      /^\\d{2}:\\d{2}$/.test(event.start) &&
-      /^\\d{2}:\\d{2}$/.test(event.end) &&
+      /^\d{2}:\d{2}$/.test(event.start) &&
+      /^\d{2}:\d{2}$/.test(event.end) &&
       event.end > event.start &&
       (event.location === undefined || (typeof event.location === "string" && event.location.length <= 100)) &&
       (event.note === undefined || (typeof event.note === "string" && event.note.length <= 240));
@@ -135,7 +135,7 @@
     for (let offset = 0; offset < bytes.length; offset += 0x8000) {
       binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
     }
-    const encoded = btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_").replace(/=+$/g, "");
+    const encoded = btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
     return `${location.origin}${location.pathname}#share=${encoded}`;
   }
 
