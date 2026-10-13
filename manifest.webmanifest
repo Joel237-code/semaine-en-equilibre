@@ -1,0 +1,21 @@
+{
+  "id": "./",
+  "name": "Semaine pour Guyane",
+  "short_name": "Semaine Guyane",
+  "description": "Le planning hebdomadaire de Guyane.",
+  "lang": "fr-FR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f4ec",
+  "theme_color": "#f6f4ec",
+  "categories": ["lifestyle", "productivity"],
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
