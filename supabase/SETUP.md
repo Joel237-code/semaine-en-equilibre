@@ -10,7 +10,7 @@ Crée un compte/projet Supabase dans le tableau de bord officiel. Choisis un mot
 
 Dans Supabase, ouvre **SQL Editor**. Copie le contenu de [schema.sql](schema.sql), exécute-le une seule fois, puis vérifie que les tables `plans`, `plan_members` et `events` apparaissent.
 
-Le schéma active RLS et limite un planning à deux membres. Le propriétaire peut saisir et gérer les horaires. Le compte invité peut consulter ces horaires et créer des propositions de sport. Le propriétaire peut ensuite accepter, modifier ou refuser ces propositions. Le code d’invitation est aléatoire, stocké sous forme hachée et utilisable une fois.
+Le schéma active RLS et limite un planning à deux membres. Le compte propriétaire peut consulter le planning et créer des propositions de sport. Le compte invité saisit et gère ses horaires, puis accepte, modifie ou refuse les propositions. C’est le rôle prévu si tu crées le planning et transmets le code à ta copine. Le code d’invitation est aléatoire, stocké sous forme hachée et utilisable une fois.
 
 ## 3. Activer les comptes
 
