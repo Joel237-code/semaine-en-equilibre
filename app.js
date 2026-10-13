@@ -48,14 +48,111 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     }
   };
 
+  const authEls = {
+    panel: document.querySelector("#auth-panel"), setupPanel: document.querySelector("#setup-panel"),
+    setupMessage: document.querySelector("#setup-message"), plannerApp: document.querySelector("#planner-app"),
+    email: document.querySelector("#auth-email"), password: document.querySelector("#auth-password"),
+    message: document.querySelector("#auth-message"), signIn: document.querySelector("#sign-in"),
+    signUp: document.querySelector("#sign-up"), signOut: document.querySelector("#sign-out"),
+    retryPlanner: document.querySelector("#retry-planner"), migrationPanel: document.querySelector("#migration-panel"),
+    importLocal: document.querySelector("#import-local")
+  };
   const sharedSnapshot = readSharedSnapshot();
   const sharedMode = Boolean(sharedSnapshot);
   const sharedDraftKey = sharedSnapshot ? `${STORAGE_KEY}.shared.${sharedSnapshot.encoded}` : "";
-  let events = sharedSnapshot
-    ? loadEvents(sharedDraftKey, sharedSnapshot.events)
-    : loadEvents();
+  const localEvents = sharedSnapshot ? [] : loadEvents();
+  let events = sharedSnapshot ? loadEvents(sharedDraftKey, sharedSnapshot.events) : [...localEvents];
   let weekStart = sharedSnapshot ? parseDate(sharedSnapshot.week) : mondayOf(new Date());
   let activeFilter = "all";
+  let plannerId = null;
+  let currentUser = null;
+
+  function showAuth(message = "") {
+    authEls.panel.hidden = false; authEls.setupPanel.hidden = true; authEls.plannerApp.hidden = true;
+    authEls.signOut.hidden = true; els.storageLabel.textContent = "Connexion requise"; authEls.message.textContent = message;
+  }
+  function showSetup(message) {
+    authEls.panel.hidden = true; authEls.setupPanel.hidden = false; authEls.plannerApp.hidden = true;
+    authEls.signOut.hidden = false; els.storageLabel.textContent = "Compte connecté"; authEls.setupMessage.textContent = message;
+  }
+  function showPlanner() {
+    authEls.panel.hidden = true; authEls.setupPanel.hidden = true; authEls.plannerApp.hidden = false;
+    authEls.signOut.hidden = !currentUser;
+  }
+  function toDatabaseEvent(event) {
+    return { id: event.id, planner_id: plannerId, title: event.title, category: event.category,
+      activity_date: event.date, start_time: event.start, end_time: event.end,
+      location: event.location || null, note: event.note || null };
+  }
+  function fromDatabaseEvent(row) {
+    return { id: row.id, title: row.title, category: row.category, date: row.activity_date,
+      start: String(row.start_time).slice(0, 5), end: String(row.end_time).slice(0, 5),
+      location: row.location || "", note: row.note || "" };
+  }
+  async function loadCloudEvents() {
+    const { data, error } = await supabase.from("activities")
+      .select("id,title,category,activity_date,start_time,end_time,location,note")
+      .eq("planner_id", plannerId).order("activity_date").order("start_time");
+    if (error) throw error;
+    events = (data || []).map(fromDatabaseEvent);
+    authEls.migrationPanel.hidden = !(events.length === 0 && localEvents.length > 0);
+    render();
+  }
+  async function handleAuthenticated(user, force = false) {
+    if (!user || (!force && currentUser?.id === user.id && plannerId)) return;
+    currentUser = user;
+    const { data: memberships, error } = await supabase.from("planner_members").select("planner_id,role").limit(1);
+    if (error) { plannerId = null; showSetup("Connexion réussie, mais impossible de lire le planning. Vérifie les règles d’accès."); return; }
+    if (!memberships?.length) { plannerId = null; showSetup("Ce compte n’est pas encore relié au planning. Une étape de configuration dans Supabase reste à faire."); return; }
+    plannerId = memberships[0].planner_id;
+    showPlanner();
+    try { await loadCloudEvents(); }
+    catch (error) {
+      authEls.setupMessage.textContent = error.message || "Impossible de charger les activités.";
+      authEls.setupPanel.hidden = false; authEls.plannerApp.hidden = true; els.storageLabel.textContent = "Erreur de synchronisation";
+    }
+  }
+  async function bootstrap() {
+    if (sharedMode) { showPlanner(); render(); return; }
+    const { data, error } = await supabase.auth.getSession();
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") { currentUser = null; plannerId = null; showAuth(); }
+      else if (session?.user && event !== "INITIAL_SESSION") window.setTimeout(() => handleAuthenticated(session.user), 0);
+    });
+    if (error) { showAuth("Impossible de vérifier la session. Recharge la page."); return; }
+    if (data.session?.user) await handleAuthenticated(data.session.user);
+    else showAuth();
+  }
+  async function authenticate(mode) {
+    const email = authEls.email.value.trim(), password = authEls.password.value;
+    authEls.message.textContent = "";
+    if (!email || !password) { authEls.message.textContent = "Saisis ton adresse e-mail et ton mot de passe."; return; }
+    authEls.signIn.disabled = true; authEls.signUp.disabled = true;
+    try {
+      if (mode === "signup") {
+        const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: location.origin + location.pathname } });
+        if (error) throw error;
+        if (data.session && data.user) await handleAuthenticated(data.user, true);
+        else authEls.message.textContent = "Compte créé. Confirme ton adresse e-mail, puis connecte-toi.";
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        await handleAuthenticated(data.user, true);
+      }
+    } catch (error) { authEls.message.textContent = error.message || "La connexion a échoué."; }
+    finally { authEls.signIn.disabled = false; authEls.signUp.disabled = false; }
+  }
+  async function importLocalEvents() {
+    if (!plannerId || !localEvents.length) return;
+    authEls.importLocal.disabled = true;
+    try {
+      const records = localEvents.filter(isValidEvent).map(event => ({ ...toDatabaseEvent({ ...event, id: crypto.randomUUID() }) }));
+      const { error } = await supabase.from("activities").insert(records);
+      if (error) throw error;
+      await loadCloudEvents();
+    } catch (error) { authEls.setupMessage.textContent = error.message || "L’import a échoué."; }
+    finally { authEls.importLocal.disabled = false; }
+  }
 
   function loadEvents(storageKey = STORAGE_KEY, fallback = []) {
     try {
@@ -212,7 +309,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
   function render() {
     els.weekLabel.textContent = formatWeek(weekStart);
-    els.storageLabel.textContent = sharedMode ? "Copie partagée" : "Enregistré sur cet appareil";
+    els.storageLabel.textContent = sharedMode ? "Copie partagée" : plannerId ? "Synchronisé dans le cloud" : currentUser ? "Compte connecté" : "Connexion requise";
     els.previousWeek.disabled = sharedMode;
     els.nextWeek.disabled = sharedMode;
     els.currentWeek.hidden = sharedMode;
@@ -431,5 +528,10 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     });
   });
 
-  render();
+  authEls.signIn.addEventListener("click", () => authenticate("signin"));
+  authEls.signUp.addEventListener("click", () => authenticate("signup"));
+  authEls.signOut.addEventListener("click", async () => { const { error } = await supabase.auth.signOut(); if (error) authEls.message.textContent = error.message; });
+  authEls.retryPlanner.addEventListener("click", () => currentUser && handleAuthenticated(currentUser, true));
+  authEls.importLocal.addEventListener("click", importLocalEvents);
+  await bootstrap();
 })();
