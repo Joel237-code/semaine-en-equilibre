@@ -13,7 +13,7 @@ Un agenda hebdomadaire pour répartir école, travail, voyages, moments spiritue
 
 La version actuellement publiée enregistre encore les activités dans le stockage local du navigateur (`localStorage`). Elles ne se synchronisent pas entre appareils.
 
-Le schéma Supabase de préparation se trouve dans [supabase/schema.sql](supabase/schema.sql). Il prévoit un planning privé limité à deux comptes : la personne propriétaire saisit les horaires fixes et gère les activités; la personne invitée peut consulter le planning et proposer des créneaux de sport. **Ce schéma n’est pas encore connecté au site publié.**
+Le schéma Supabase de préparation se trouve dans [supabase/schema.sql](supabase/schema.sql). Il prévoit un planning privé limité à deux comptes : la personne propriétaire peut consulter le planning et proposer des créneaux de sport; la personne invitée saisit les horaires et décide si elle accepte ces propositions. **Ce schéma n’est pas encore connecté au site publié.**
 
 Le dépôt et le code du site sont publics. N’y ajoutez jamais d’horaires réels, de mots de passe, de clés secrètes ou de données personnelles. Le navigateur pourra utiliser uniquement l’URL du projet et la clé publique Supabase, avec les règles RLS du schéma activées. La clé secrète/service-role Supabase ne doit jamais être mise dans le site.
 
