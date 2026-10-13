@@ -1,28 +1,27 @@
 # Semaine en équilibre
 
-Un agenda hebdomadaire pour répartir école, travail, voyages, moments spirituels et sport.
+Un planning hebdomadaire du lundi au dimanche, pour organiser l’école, le travail, le sport, les moments spirituels et les autres activités.
 
-## Fonctionnalités du prototype
+## Fonctionnalités
 
 - Parcourir les semaines et revenir à la semaine en cours.
 - Ajouter, modifier et supprimer des activités.
-- Filtrer par catégorie et voir le nombre d’activités.
-- Adapter l’affichage aux téléphones et aux ordinateurs.
+- Catégories : École, Travail, Sport, Spirituel et Autre activité.
+- Partager une copie de la semaine affichée avec un lien.
+- S’adapter aux téléphones et aux ordinateurs.
 
-## Données et confidentialité
+## Partage et confidentialité
 
-La version actuellement publiée enregistre encore les activités dans le stockage local du navigateur (`localStorage`). Elles ne se synchronisent pas entre appareils.
+Les activités sont conservées dans le stockage local de chaque navigateur. Il n’y a pas de base de données ni de synchronisation automatique.
 
-Le schéma Supabase de préparation se trouve dans [supabase/schema.sql](supabase/schema.sql). Il prévoit un planning privé limité à deux comptes : la personne propriétaire peut consulter le planning et proposer des créneaux de sport; la personne invitée saisit les horaires et décide si elle accepte ces propositions. **Ce schéma n’est pas encore connecté au site publié.**
+Le bouton **Partager cette semaine** fabrique un lien contenant une copie des activités de la semaine affichée. La personne qui ouvre le lien peut consulter et modifier cette copie dans son navigateur, puis créer un nouveau lien pour transmettre les changements. Pour se renvoyer une version modifiée, partagez le nouveau lien en privé.
 
-Le dépôt et le code du site sont publics. N’y ajoutez jamais d’horaires réels, de mots de passe, de clés secrètes ou de données personnelles. Le navigateur pourra utiliser uniquement l’URL du projet et la clé publique Supabase, avec les règles RLS du schéma activées. La clé secrète/service-role Supabase ne doit jamais être mise dans le site.
+Le lien n’est pas chiffré : toute personne qui le reçoit peut lire les activités qu’il contient. Il inclut aussi les lieux et notes éventuels. Évite donc d’y mettre des informations que tu ne veux pas partager, et n’envoie le lien qu’à la personne concernée. Le fragment du lien (après `#share=`) n’est pas envoyé au serveur d’hébergement lors du chargement de la page.
 
-## Préparer le stockage partagé
-
-Suivez [les étapes de configuration Supabase](supabase/SETUP.md). La connexion de l’application au projet Supabase reste à effectuer après la création du projet.
+Le code du dépôt est public. N’y ajoute pas de vrais horaires ou d’autres informations personnelles.
 
 ## Publication
 
-GitHub Pages publie automatiquement le contenu de la branche `main`, depuis la racine du dépôt. Les changements poussés sur `main` mettent le site à jour.
+GitHub Pages publie automatiquement le contenu de la branche `main`, depuis la racine du dépôt.
 
 Site : <https://joel237-code.github.io/semaine-en-equilibre/>
