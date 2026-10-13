@@ -51,7 +51,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   const authEls = {
     panel: document.querySelector("#auth-panel"), setupPanel: document.querySelector("#setup-panel"),
     setupMessage: document.querySelector("#setup-message"), plannerApp: document.querySelector("#planner-app"),
-    email: document.querySelector("#auth-email"), password: document.querySelector("#auth-password"),
+    form: document.querySelector("#auth-form"), email: document.querySelector("#auth-email"), password: document.querySelector("#auth-password"),
     message: document.querySelector("#auth-message"), signIn: document.querySelector("#sign-in"),
     signUp: document.querySelector("#sign-up"), signOut: document.querySelector("#sign-out"),
     retryPlanner: document.querySelector("#retry-planner"), migrationPanel: document.querySelector("#migration-panel"),
@@ -516,6 +516,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     });
   });
 
+  authEls.form.addEventListener("submit", event => { event.preventDefault(); authenticate("signin"); });
   authEls.signIn.addEventListener("click", () => authenticate("signin"));
   authEls.signUp.addEventListener("click", () => authenticate("signup"));
   authEls.signOut.addEventListener("click", async () => { const { error } = await supabase.auth.signOut(); if (error) authEls.message.textContent = error.message; });
