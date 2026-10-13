@@ -2,6 +2,12 @@
 
 Planning hebdomadaire partagé du lundi au dimanche, avec horaires d’école, travail, sport, spiritualité et autres activités.
 
+## Utiliser comme application web
+
+L’application peut être installée depuis le navigateur sur l’écran d’accueil ou le bureau. Sur Android, ouvre le site dans Chrome puis choisis **Installer l’application** dans le menu. Sur iPhone, ouvre-le dans Safari, touche **Partager**, puis **Sur l’écran d’accueil**.
+
+Une connexion Internet reste nécessaire pour se connecter et synchroniser les activités dans Supabase.
+
 ## Fonctionnement
 
 - Parcourir les semaines avec les flèches ; les activités restent associées à leurs dates.
