@@ -19,7 +19,7 @@
         <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
         <span>Semaine <em>en équilibre</em></span>
       </a>
-      <span class="local-badge"><span class="status-dot"></span> Enregistré sur cet appareil</span>
+      <span class="local-badge"><span class="status-dot"></span><span id="storage-label">Enregistré sur cet appareil</span></span>
     </header>
 
     <main>
@@ -45,13 +45,15 @@
           <div class="week-controls">
             <button class="icon-button" id="previous-week" type="button" aria-label="Semaine précédente">←</button>
             <button class="today-button" id="current-week" type="button">Aujourd’hui</button>
+            <button class="today-button" id="leave-shared" type="button" hidden>Mon planning</button>
             <button class="icon-button" id="next-week" type="button" aria-label="Semaine suivante">→</button>
           </div>
         </div>
 
+        <p class="share-notice" id="share-notice" hidden>Tu consultes une copie d’une seule semaine. Tes modifications restent sur cet appareil; partage un nouveau lien pour les transmettre.</p>
         <div class="summary-row" aria-label="Résumé de la semaine">
           <div class="summary-card"><span class="summary-icon school-icon">▤</span><span><strong id="school-count">0</strong><small>cours prévus</small></span></div>
-          <div class="summary-card"><span class="summary-icon travel-icon">↗</span><span><strong id="travel-count">0</strong><small>escapades</small></span></div>
+          <div class="summary-card"><span class="summary-icon other-icon">✦</span><span><strong id="other-count">0</strong><small>autres activités</small></span></div>
           <div class="summary-card"><span class="summary-icon spirit-icon">✧</span><span><strong id="spirit-count">0</strong><small>moments pour soi</small></span></div>
           <div class="summary-card"><span class="summary-icon sport-icon">⌁</span><span><strong id="sport-count">0</strong><small>séances sport</small></span></div>
           <div class="summary-card"><span class="summary-icon work-icon">↗</span><span><strong id="work-count">0</strong><small>temps de travail</small></span></div>
@@ -61,16 +63,26 @@
           <div class="filters" role="group" aria-label="Filtrer les activités">
             <button class="filter-chip is-active" type="button" data-filter="all">Tout</button>
             <button class="filter-chip" type="button" data-filter="school"><span class="chip-dot school-dot"></span>École</button>
-            <button class="filter-chip" type="button" data-filter="travel"><span class="chip-dot travel-dot"></span>Voyages</button>
             <button class="filter-chip" type="button" data-filter="spiritual"><span class="chip-dot spirit-dot"></span>Spirituel</button>
             <button class="filter-chip" type="button" data-filter="sport"><span class="chip-dot sport-dot"></span>Sport</button>
             <button class="filter-chip" type="button" data-filter="work"><span class="chip-dot work-dot"></span>Travail</button>
+            <button class="filter-chip" type="button" data-filter="other"><span class="chip-dot other-dot"></span>Autre activité</button>
           </div>
-          <button class="add-button" id="open-form" type="button"><span aria-hidden="true">＋</span> Ajouter une activité</button>
+          <div class="toolbar-actions">
+            <button class="share-button" id="share-week" type="button">Partager cette semaine</button>
+            <button class="add-button" id="open-form" type="button"><span aria-hidden="true">＋</span> Ajouter une activité</button>
+          </div>
         </div>
 
+        <div class="share-output" id="share-output" hidden>
+          <strong id="share-message">Lien de la semaine</strong>
+          <div class="share-link-row">
+            <input id="share-link" class="text-input" type="text" readonly aria-label="Lien à partager">
+            <button class="copy-button" id="copy-share-link" type="button">Copier</button>
+          </div>
+        </div>
         <div class="week-grid" id="week-grid" aria-live="polite"></div>
-        <p class="privacy-note"><span aria-hidden="true">◈</span> Ton planning reste dans le navigateur de cet appareil. Il n’est pas envoyé sur GitHub.</p>
+        <p class="privacy-note"><span aria-hidden="true">◈</span> Les activités restent sur cet appareil. Un lien partagé contient une copie de la semaine, visible par toute personne qui le reçoit.</p>
       </section>
     </main>
 
@@ -89,7 +101,7 @@
       <div class="form-row">
         <div class="form-field"><label class="field-label" for="event-category">Catégorie</label>
           <select class="text-input" id="event-category" name="category">
-            <option value="school">École</option><option value="travel">Voyage</option><option value="spiritual">Spirituel</option><option value="sport">Sport</option><option value="work">Travail</option>
+            <option value="school">École</option><option value="work">Travail</option><option value="spiritual">Spirituel</option><option value="sport">Sport</option><option value="other">Autre activité</option>
           </select>
         </div>
         <div class="form-field"><label class="field-label" for="event-date">Jour</label><input class="text-input" id="event-date" name="date" type="date" required></div>
