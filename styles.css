@@ -70,7 +70,7 @@ button { color: inherit; }
 .day-date { color: #33483a; font: 700 14px Manrope, sans-serif; }
 .day-column.is-today .day-date { color: var(--green); }
 .day-events { display: grid; gap: 7px; }
-.event-card { position: relative; padding: 8px 7px 8px 9px; overflow: hidden; border-radius: 7px; background: var(--event-tint); cursor: pointer; }
+.event-card { position: relative; width: 100%; padding: 8px 7px 8px 9px; overflow: hidden; border: 0; border-radius: 7px; background: var(--event-tint); color: inherit; text-align: left; cursor: pointer; }
 .event-card::before { position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background: var(--event-color); content: ""; }
 .event-time { display: block; margin-bottom: 4px; color: var(--event-color); font-size: 9px; font-weight: 700; }
 .event-title { display: block; color: #34443a; font-size: 10px; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
