@@ -4,7 +4,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   "use strict";
 
   const STORAGE_KEY = "semaine-en-equilibre.events.v1";
-  const supabase = createClient("https://vlmnyhuirtczgjrbonlxl.supabase.co", "sb_publishable_4BgM1XswECgt8rYElCyCcQ_yUvIEtHl");
+  const supabase = createClient("https://vlmnyhuirtczgjrbnlxl.supabase.co", "sb_publishable_4BgM1XswECgt8rYElCyCcQ_yUvIEtHl");
   const categories = {
     school: { label: "École", className: "school" },
     work: { label: "Travail", className: "work" },
