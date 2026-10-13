@@ -17,14 +17,8 @@ Le code du dépôt est public. N’y ajoutez pas de vrais horaires, adresses ou 
 
 ## Publier avec GitHub Pages
 
-Le workflow `.github/workflows/pages.yml` publie automatiquement le site à chaque mise à jour de `main`.
+GitHub Pages publie automatiquement le contenu de la branche `main`, depuis la racine du dépôt. Les changements poussés sur `main` mettront le site à jour.
 
-Pour l’activer la première fois :
-
-1. Ouvrir **Settings → Pages** dans ce dépôt.
-2. Dans **Build and deployment**, choisir **GitHub Actions** comme source.
-3. Ouvrir l’onglet **Actions** et vérifier le déploiement.
-
-L’adresse du site sera normalement :
+L’adresse du site est :
 
 `https://Joel237-code.github.io/semaine-en-equilibre/`
