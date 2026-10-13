@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f4ec">
+  <meta name="description" content="Un agenda hebdomadaire simple pour trouver son équilibre entre études, voyages, spiritualité et sport.">
+  <title>Semaine en équilibre</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Semaine en équilibre, accueil">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span>Semaine <em>en équilibre</em></span>
+      </a>
+      <span class="local-badge"><span class="status-dot"></span> Enregistré sur cet appareil</span>
+    </header>
+
+    <main>
+      <section class="intro">
+        <div class="intro-copy">
+          <p class="eyebrow">TON ESPACE, TON RYTHME</p>
+          <h1>Une semaine qui<br><span>te ressemble.</span></h1>
+          <p class="intro-text">Fais de la place pour ce qui compte : apprendre, découvrir, te recentrer et bouger.</p>
+        </div>
+        <div class="balance-art" aria-hidden="true">
+          <div class="sun"></div><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+          <span class="art-leaf leaf-one">✳</span><span class="art-leaf leaf-two">✦</span>
+          <span class="art-caption">un jour<br>à la fois</span>
+        </div>
+      </section>
+
+      <section class="planner" aria-label="Agenda de la semaine">
+        <div class="planner-heading">
+          <div>
+            <p class="eyebrow">MON PLANNING</p>
+            <h2 id="week-label">Cette semaine</h2>
+          </div>
+          <div class="week-controls">
+            <button class="icon-button" id="previous-week" type="button" aria-label="Semaine précédente">←</button>
+            <button class="today-button" id="current-week" type="button">Aujourd’hui</button>
+            <button class="icon-button" id="next-week" type="button" aria-label="Semaine suivante">→</button>
+          </div>
+        </div>
+
+        <div class="summary-row" aria-label="Résumé de la semaine">
+          <div class="summary-card"><span class="summary-icon school-icon">▤</span><span><strong id="school-count">0</strong><small>cours prévus</small></span></div>
+          <div class="summary-card"><span class="summary-icon travel-icon">↗</span><span><strong id="travel-count">0</strong><small>escapades</small></span></div>
+          <div class="summary-card"><span class="summary-icon spirit-icon">✧</span><span><strong id="spirit-count">0</strong><small>moments pour soi</small></span></div>
+          <div class="summary-card"><span class="summary-icon sport-icon">⌁</span><span><strong id="sport-count">0</strong><small>séances sport</small></span></div>
+        </div>
+
+        <div class="agenda-toolbar">
+          <div class="filters" role="group" aria-label="Filtrer les activités">
+            <button class="filter-chip is-active" type="button" data-filter="all">Tout</button>
+            <button class="filter-chip" type="button" data-filter="school"><span class="chip-dot school-dot"></span>École</button>
+            <button class="filter-chip" type="button" data-filter="travel"><span class="chip-dot travel-dot"></span>Voyages</button>
+            <button class="filter-chip" type="button" data-filter="spiritual"><span class="chip-dot spirit-dot"></span>Spirituel</button>
+            <button class="filter-chip" type="button" data-filter="sport"><span class="chip-dot sport-dot"></span>Sport</button>
+          </div>
+          <button class="add-button" id="open-form" type="button"><span aria-hidden="true">＋</span> Ajouter une activité</button>
+        </div>
+
+        <div class="week-grid" id="week-grid" aria-live="polite"></div>
+        <p class="privacy-note"><span aria-hidden="true">◈</span> Ton planning reste dans le navigateur de cet appareil. Il n’est pas envoyé sur GitHub.</p>
+      </section>
+    </main>
+
+    <footer><span>Prends le temps de faire de la place pour toi.</span><span class="footer-sparkle">✳</span></footer>
+  </div>
+
+  <dialog class="event-dialog" id="event-dialog" aria-labelledby="form-title">
+    <form id="event-form" method="dialog">
+      <div class="dialog-heading">
+        <div><p class="eyebrow">UN MOMENT POUR TOI</p><h2 id="form-title">Ajouter une activité</h2></div>
+        <button class="icon-button close-button" id="close-form" type="button" aria-label="Fermer">×</button>
+      </div>
+      <input type="hidden" id="event-id">
+      <label class="field-label" for="event-title">Nom de l’activité</label>
+      <input class="text-input" id="event-title" name="title" maxlength="80" placeholder="Ex. Cours de biologie" required>
+      <div class="form-row">
+        <div class="form-field"><label class="field-label" for="event-category">Catégorie</label>
+          <select class="text-input" id="event-category" name="category">
+            <option value="school">École</option><option value="travel">Voyage</option><option value="spiritual">Spirituel</option><option value="sport">Sport</option>
+          </select>
+        </div>
+        <div class="form-field"><label class="field-label" for="event-date">Jour</label><input class="text-input" id="event-date" name="date" type="date" required></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label class="field-label" for="event-start">Début</label><input class="text-input" id="event-start" name="start" type="time" value="09:00" required></div>
+        <div class="form-field"><label class="field-label" for="event-end">Fin</label><input class="text-input" id="event-end" name="end" type="time" value="10:00" required></div>
+      </div>
+      <label class="field-label" for="event-location">Lieu <span class="optional">(facultatif)</span></label>
+      <input class="text-input" id="event-location" name="location" maxlength="100" placeholder="Ex. Bibliothèque">
+      <label class="field-label" for="event-note">Note <span class="optional">(facultatif)</span></label>
+      <textarea class="text-input note-input" id="event-note" name="note" maxlength="240" rows="2" placeholder="Une petite précision…"></textarea>
+      <p class="form-error" id="form-error" role="alert"></p>
+      <div class="dialog-actions">
+        <button class="delete-button" id="delete-event" type="button" hidden>Supprimer</button>
+        <span class="action-spacer"></span>
+        <button class="cancel-button" id="cancel-form" type="button">Annuler</button>
+        <button class="save-button" id="save-event" type="submit">Enregistrer</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>
