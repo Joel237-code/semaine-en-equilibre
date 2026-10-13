@@ -448,41 +448,27 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.error.textContent = "";
   }
 
-  function handleSubmit(event) {
-    event.preventDefault();
-    els.error.textContent = "";
-
-    if (els.end.value <= els.start.value) {
-      els.error.textContent = "L’heure de fin doit être après l’heure de début.";
-      els.end.focus();
-      return;
+  async function handleSubmit(event) {
+    event.preventDefault(); els.error.textContent = "";
+    if (els.end.value <= els.start.value) { els.error.textContent = "L’heure de fin doit être après l’heure de début."; els.end.focus(); return; }
+    const id = els.eventId.value || crypto.randomUUID();
+    const record = { id, title: els.title.value.trim(), category: els.category.value, date: els.date.value,
+      start: els.start.value, end: els.end.value, location: els.location.value.trim(), note: els.note.value.trim() };
+    if (!record.title || !record.date) { els.error.textContent = "Ajoute un nom et un jour pour cette activité."; return; }
+    if (sharedMode) {
+      const i = events.findIndex(item => item.id === id); if (i >= 0) events[i] = record; else events.push(record);
+      weekStart = mondayOf(parseDate(record.date)); saveEvents(); closeForm(); render(); return;
     }
-
-    const id = els.eventId.value || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
-    const record = {
-      id,
-      title: els.title.value.trim(),
-      category: els.category.value,
-      date: els.date.value,
-      start: els.start.value,
-      end: els.end.value,
-      location: els.location.value.trim(),
-      note: els.note.value.trim()
-    };
-
-    if (!record.title || !record.date) {
-      els.error.textContent = "Ajoute un nom et un jour pour cette activité.";
-      return;
-    }
-
-    const existingIndex = events.findIndex((item) => item.id === id);
-    if (existingIndex >= 0) events[existingIndex] = record;
-    else events.push(record);
-
-    weekStart = mondayOf(parseDate(record.date));
-    saveEvents();
-    closeForm();
-    render();
+    if (!plannerId) { els.error.textContent = "Connecte-toi au planning partagé avant d’enregistrer."; return; }
+    const saveButton = document.querySelector("#save-event"); saveButton.disabled = true;
+    try {
+      const { error } = await supabase.from("activities").upsert(toDatabaseEvent(record));
+      if (error) throw error;
+      const i = events.findIndex(item => item.id === id); if (i >= 0) events[i] = record; else events.push(record);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+      weekStart = mondayOf(parseDate(record.date)); closeForm(); render();
+    } catch (error) { els.error.textContent = error.message || "L’activité n’a pas pu être enregistrée."; }
+    finally { saveButton.disabled = false; }
   }
 
   document.querySelector("#previous-week").addEventListener("click", () => {
@@ -507,13 +493,15 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   els.dialog.addEventListener("click", (event) => {
     if (event.target === els.dialog) closeForm();
   });
-  els.delete.addEventListener("click", () => {
+  els.delete.addEventListener("click", async () => {
     const id = els.eventId.value;
     if (!id || !window.confirm("Supprimer cette activité du planning ?")) return;
-    events = events.filter((event) => event.id !== id);
-    saveEvents();
-    closeForm();
-    render();
+    if (sharedMode) { events = events.filter(event => event.id !== id); saveEvents(); closeForm(); render(); return; }
+    try {
+      const { error } = await supabase.from("activities").delete().eq("id", id).eq("planner_id", plannerId);
+      if (error) throw error;
+      events = events.filter(event => event.id !== id); closeForm(); render();
+    } catch (error) { els.error.textContent = error.message || "L’activité n’a pas pu être supprimée."; }
   });
 
   document.querySelectorAll(".filter-chip").forEach((button) => {
