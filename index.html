@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=8">
-  <script type="module" src="app.js?v=8"></script>
+  <link rel="stylesheet" href="styles.css?v=9">
+  <script type="module" src="app.js?v=9"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -103,6 +103,39 @@
         </div>
         <div class="week-grid" id="week-grid" aria-live="polite"></div>
         <p class="privacy-note"><span aria-hidden="true">◈</span> Les activités sont synchronisées dans le cloud pour les comptes autorisés. Un lien de copie reste visible par toute personne qui le reçoit.</p>
+      </section>
+      <section class="finance-panel" id="finance-panel" aria-labelledby="finance-heading" hidden>
+        <header class="finance-heading">
+          <div><p class="eyebrow">PRENDRE SOIN DE SON BUDGET</p><h2 id="finance-heading">Suivi financier</h2></div>
+          <label class="month-picker">Mois <input class="text-input" id="finance-month" type="month" aria-label="Mois du suivi financier"></label>
+        </header>
+        <div class="finance-summary">
+          <article class="finance-summary-card"><span>Salaire du mois</span><strong id="salary-total">À renseigner</strong></article>
+          <article class="finance-summary-card"><span>Dépenses</span><strong id="expenses-total">0,00 €</strong></article>
+          <article class="finance-summary-card finance-balance"><span>Reste après dépenses</span><strong id="money-left">—</strong></article>
+        </div>
+        <div class="finance-forms">
+          <form class="finance-form" id="salary-form">
+            <h3>Mon salaire</h3>
+            <label class="field-label" for="salary-amount">Salaire mensuel (€)</label>
+            <div class="finance-input-row"><input class="text-input" id="salary-amount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Ex. 1500" required><button class="save-button" type="submit">Enregistrer</button></div>
+          </form>
+          <form class="finance-form" id="expense-form">
+            <h3>Ajouter une dépense</h3>
+            <label class="field-label" for="expense-label">À quoi correspond-elle&nbsp;?</label>
+            <input class="text-input" id="expense-label" maxlength="80" placeholder="Ex. Courses" required>
+            <div class="form-row">
+              <div class="form-field"><label class="field-label" for="expense-amount">Montant (€)</label><input class="text-input" id="expense-amount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Ex. 24.50" required></div>
+              <div class="form-field"><label class="field-label" for="expense-date">Date</label><input class="text-input" id="expense-date" type="date" required></div>
+            </div>
+            <button class="save-button finance-add-button" type="submit">Ajouter la dépense</button>
+          </form>
+        </div>
+        <p class="finance-message" id="finance-message" role="status" aria-live="polite"></p>
+        <p class="finance-setup" id="finance-setup" hidden>Une petite configuration Supabase est nécessaire avant la première utilisation. <a href="https://github.com/Joel237-code/semaine-en-equilibre/blob/main/supabase/migrations/20261014010000_add_financial_tracking.sql" target="_blank" rel="noopener">Voir le SQL à exécuter</a>.</p>
+        <div class="expense-list-heading"><h3>Dépenses du mois</h3><span class="optional">Les dépenses peuvent être supprimées.</span></div>
+        <p class="finance-empty" id="expense-empty">Aucune dépense enregistrée pour ce mois.</p>
+        <ul class="expense-list" id="expense-list"></ul>
       </section>
       </div>
     </main>
