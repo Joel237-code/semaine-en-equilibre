@@ -137,6 +137,6 @@ footer { display: flex; justify-content: center; align-items: center; gap: 8px; 
   .event-dialog form { min-height: 100%; }
 }
 @media (max-width: 900px) {
-  .event-dialog { position: fixed; inset: auto 0 0; width: 100%; max-width: none; height: min(76vh, 700px); height: min(76dvh, 700px); max-height: 76vh; margin: 0; border-radius: 18px 18px 0 0; }
+  .event-dialog { position: fixed; inset: auto 0 0; width: 100%; max-width: none; height: min(62vh, 700px); height: min(62dvh, 700px); max-height: 62vh; margin: 0; border-radius: 18px 18px 0 0; }
   .event-dialog::backdrop { background: rgba(26,39,30,.08); backdrop-filter: none; }
 }
