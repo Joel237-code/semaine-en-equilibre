@@ -126,3 +126,17 @@ footer { display: flex; justify-content: center; align-items: center; gap: 8px; 
 .cloud-migration{display:flex;justify-content:space-between;align-items:center;gap:14px;margin:14px 0;padding:13px;border:1px solid #e6e9df;border-radius:10px;background:#fbfcf8;color:#68776b;font-size:11px;line-height:1.5}
 [hidden]{display:none!important}
 @media(max-width:700px){.auth-panel{grid-template-columns:1fr;gap:20px;margin:26px auto 55px;padding:25px}.setup-panel{margin:26px auto 55px;padding:25px}.account-controls{gap:5px}.account-button{padding:0 7px;font-size:9px}.cloud-migration{align-items:flex-start;flex-direction:column}}
+
+/* Keep the weekly calendar visible beside the activity editor. */
+@media (min-width: 901px) {
+  .page-shell.is-event-form-open { width: calc(100vw - 430px); max-width: none; margin: 0; padding: 0 24px; }
+  .page-shell.is-event-form-open .week-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .page-shell.is-event-form-open .summary-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .event-dialog { position: fixed; inset: 0 0 0 auto; width: min(430px, calc(100vw - 300px)); height: 100vh; height: 100dvh; max-height: none; margin: 0; border-radius: 18px 0 0 18px; }
+  .event-dialog::backdrop { background: transparent; backdrop-filter: none; }
+  .event-dialog form { min-height: 100%; }
+}
+@media (max-width: 900px) {
+  .event-dialog { position: fixed; inset: auto 0 0; width: 100%; max-width: none; height: min(76vh, 700px); height: min(76dvh, 700px); max-height: 76vh; margin: 0; border-radius: 18px 18px 0 0; }
+  .event-dialog::backdrop { background: rgba(26,39,30,.08); backdrop-filter: none; }
+}
