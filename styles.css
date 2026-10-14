@@ -12,6 +12,7 @@
   --school: #6d86bb;
   --other: #d99a49;
   --spiritual: #a283b9;
+  --selfcare: #d18b70;
   --sport: #689276;
   --work: #b36e65;
   font-family: "DM Sans", sans-serif;
@@ -51,16 +52,16 @@ button { color: inherit; }
 .icon-button { width: 37px; border-radius: 10px; font-size: 17px; transition: .15s ease; }
 .icon-button:hover, .today-button:hover, .cancel-button:hover { border-color: #bdcabc; background: #f8faf5; }
 .today-button { padding: 0 13px; border-radius: 10px; font-size: 11px; font-weight: 700; }
-.summary-row { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; margin-bottom: 25px; }
+.summary-row { display: grid; grid-template-columns: repeat(6,1fr); gap: 10px; margin-bottom: 25px; }
 .summary-card { display: flex; align-items: center; gap: 11px; min-height: 68px; padding: 12px 15px; border: 1px solid #eeede6; border-radius: 12px; background: #fff; }
 .summary-icon { width: 35px; height: 35px; display: grid; place-items: center; border-radius: 11px; font-size: 17px; }
-.school-icon { color: var(--school); background: #edf1f9; }.other-icon { color: var(--other); background: #fbf1e2; }.spirit-icon { color: var(--spiritual); background: #f2edf6; }.sport-icon { color: var(--sport); background: #eaf2e9; }.work-icon { color: var(--work); background: #f8ecea; }
+.school-icon { color: var(--school); background: #edf1f9; }.other-icon { color: var(--other); background: #fbf1e2; }.spirit-icon { color: var(--spiritual); background: #f2edf6; }.sport-icon { color: var(--sport); background: #eaf2e9; }.selfcare-icon { color: var(--selfcare); background: #f9eee9; }.work-icon { color: var(--work); background: #f8ecea; }
 .summary-card strong, .summary-card small { display: block; }.summary-card strong { font: 700 16px Manrope, sans-serif; }.summary-card small { margin-top: 2px; color: #89928b; font-size: 10px; }
 .agenda-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 0 0 17px; border-bottom: 1px solid #f0efe9; }
 .filters { display: flex; flex-wrap: wrap; gap: 6px; }
 .filter-chip { display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: #808b82; cursor: pointer; font-size: 11px; font-weight: 600; }
 .filter-chip:hover { color: var(--ink); background: #f7f7f0; }.filter-chip.is-active { border-color: #e8eae1; background: #f4f6ee; color: #3c6047; }
-.chip-dot { width: 7px; height: 7px; border-radius: 50%; }.school-dot { background: var(--school); }.other-dot { background: var(--other); }.spirit-dot { background: var(--spiritual); }.sport-dot { background: var(--sport); }.work-dot { background: var(--work); }
+.chip-dot { width: 7px; height: 7px; border-radius: 50%; }.school-dot { background: var(--school); }.other-dot { background: var(--other); }.spirit-dot { background: var(--spiritual); }.selfcare-dot { background: var(--selfcare); }.sport-dot { background: var(--sport); }.work-dot { background: var(--work); }
 .toolbar-actions { display: flex; align-items: center; gap: 8px; }.add-button, .save-button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 39px; padding: 0 15px; border: 0; border-radius: 10px; background: var(--green); color: white; cursor: pointer; font-size: 11px; font-weight: 700; white-space: nowrap; transition: .15s ease; }.share-button, .copy-button { min-height: 39px; padding: 0 13px; border: 1px solid #e3e6dc; border-radius: 10px; background: #fff; color: #53695a; cursor: pointer; font-size: 11px; font-weight: 700; white-space: nowrap; }.share-button:hover, .copy-button:hover { background: #f4f6ee; border-color: #cdd8c8; }.icon-button:disabled { opacity: .4; cursor: not-allowed; }
 .add-button:hover, .save-button:hover { background: var(--green-dark); transform: translateY(-1px); }.add-button span { font-size: 16px; font-weight: 400; }
 .share-notice { margin: -7px 0 18px; padding: 10px 12px; border-radius: 9px; background: #f4f6ee; color: #68776b; font-size: 11px; line-height: 1.5; }.share-output[hidden] { display: none; }.share-output { display: grid; gap: 8px; margin: 14px 0 4px; padding: 13px; border: 1px solid #e6e9df; border-radius: 10px; background: #fbfcf8; color: #5c6d60; font-size: 11px; }.share-link-row { display: flex; gap: 8px; }.share-link-row .text-input { min-width: 0; font-size: 10px; }.week-grid { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 8px; padding-top: 15px; }
@@ -76,7 +77,7 @@ button { color: inherit; }
 .event-time { display: block; margin-bottom: 4px; color: var(--event-color); font-size: 9px; font-weight: 700; }
 .event-title { display: block; color: #34443a; font-size: 10px; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
 .event-location { display: block; margin-top: 4px; color: #7c867d; font-size: 9px; line-height: 1.3; overflow-wrap: anywhere; }
-.category-school { --event-color: var(--school); --event-tint: #f0f3fa; }.category-other { --event-color: var(--other); --event-tint: #fcf4e8; }.category-spiritual { --event-color: var(--spiritual); --event-tint: #f4eff7; }.category-sport { --event-color: var(--sport); --event-tint: #edf4eb; }.category-work { --event-color: var(--work); --event-tint: #f9efed; }
+.category-school { --event-color: var(--school); --event-tint: #f0f3fa; }.category-other { --event-color: var(--other); --event-tint: #fcf4e8; }.category-spiritual { --event-color: var(--spiritual); --event-tint: #f4eff7; }.category-sport { --event-color: var(--sport); --event-tint: #edf4eb; }.category-selfcare { --event-color: var(--selfcare); --event-tint: #fbf1ed; }.category-work { --event-color: var(--work); --event-tint: #f9efed; }
 .empty-day { margin: 0; padding: 12px 2px; color: #bbc1b8; text-align: center; font-size: 10px; }
 .empty-week { grid-column: 1/-1; padding: 36px 15px; border: 1px dashed #dadfd4; border-radius: 12px; color: #8b968c; text-align: center; font-size: 12px; line-height: 1.7; }
 .empty-week strong { display: block; margin-bottom: 5px; color: #55685a; font: 700 14px Manrope, sans-serif; }
