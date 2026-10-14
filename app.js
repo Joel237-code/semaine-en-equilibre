@@ -19,6 +19,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     weekLabel: document.querySelector("#week-label"),
     grid: document.querySelector("#week-grid"),
     dialog: document.querySelector("#event-dialog"),
+    pageShell: document.querySelector(".page-shell"),
     shareOutput: document.querySelector("#share-output"),
     shareLink: document.querySelector("#share-link"),
     shareMessage: document.querySelector("#share-message"),
@@ -430,6 +431,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   function openNewForm() {
     resetForm();
     els.dialog.showModal();
+    els.pageShell.classList.add("is-event-form-open");
     els.title.focus();
   }
 
@@ -448,6 +450,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.delete.hidden = false;
     els.formTitle.textContent = "Modifier l’activité";
     els.dialog.showModal();
+    els.pageShell.classList.add("is-event-form-open");
     els.title.focus();
   }
 
@@ -498,6 +501,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   document.querySelector("#close-form").addEventListener("click", closeForm);
   document.querySelector("#cancel-form").addEventListener("click", closeForm);
   els.form.addEventListener("submit", handleSubmit);
+  els.dialog.addEventListener("close", () => els.pageShell.classList.remove("is-event-form-open"));
   els.dialog.addEventListener("click", (event) => {
     if (event.target === els.dialog) closeForm();
   });
