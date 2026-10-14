@@ -38,6 +38,8 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     end: document.querySelector("#event-end"),
     location: document.querySelector("#event-location"),
     note: document.querySelector("#event-note"),
+    cancelled: document.querySelector("#event-cancelled"),
+    cancelledOption: document.querySelector("#cancelled-option"),
     error: document.querySelector("#form-error"),
     delete: document.querySelector("#delete-event"),
     counts: {
@@ -84,16 +86,16 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   function toDatabaseEvent(event) {
     return { id: event.id, planner_id: plannerId, title: event.title, category: event.category,
       activity_date: event.date, start_time: event.start, end_time: event.end,
-      location: event.location || null, note: event.note || null };
+      location: event.location || null, note: event.note || null, cancelled: Boolean(event.cancelled) };
   }
   function fromDatabaseEvent(row) {
     return { id: row.id, title: row.title, category: row.category, date: row.activity_date,
       start: String(row.start_time).slice(0, 5), end: String(row.end_time).slice(0, 5),
-      location: row.location || "", note: row.note || "" };
+      location: row.location || "", note: row.note || "", cancelled: row.cancelled === true };
   }
   async function loadCloudEvents() {
     const { data, error } = await supabase.from("activities")
-      .select("id,title,category,activity_date,start_time,end_time,location,note")
+      .select("id,title,category,activity_date,start_time,end_time,location,note,cancelled")
       .eq("planner_id", plannerId).order("activity_date").order("start_time");
     if (error) throw error;
     events = (data || []).map(fromDatabaseEvent);
@@ -334,8 +336,8 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   function makeEventCard(event) {
     const card = document.createElement("button");
     card.type = "button";
-    card.className = `event-card category-${categories[event.category].className}`;
-    card.setAttribute("aria-label", `${categories[event.category].label}, ${event.title}, ${event.start} à ${event.end}. Modifier`);
+    card.className = `event-card category-${categories[event.category].className}${event.cancelled ? " is-cancelled" : ""}`;
+    card.setAttribute("aria-label", `${categories[event.category].label}, ${event.title}, ${event.start} à ${event.end}${event.cancelled ? ", activité annulée" : ""}. Modifier`);
     card.addEventListener("click", () => openEditForm(event));
 
     const time = document.createElement("span");
@@ -420,6 +422,8 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.date.value = dateKey(weekStart);
     els.error.textContent = "";
     els.delete.hidden = true;
+    els.cancelled.checked = false;
+    els.cancelledOption.hidden = true;
     els.formTitle.textContent = "Ajouter une activité";
   }
 
@@ -439,6 +443,8 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.end.value = event.end;
     els.location.value = event.location || "";
     els.note.value = event.note || "";
+    els.cancelled.checked = event.cancelled === true;
+    els.cancelledOption.hidden = false;
     els.delete.hidden = false;
     els.formTitle.textContent = "Modifier l’activité";
     els.dialog.showModal();
@@ -455,7 +461,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     if (els.end.value <= els.start.value) { els.error.textContent = "L’heure de fin doit être après l’heure de début."; els.end.focus(); return; }
     const id = els.eventId.value || crypto.randomUUID();
     const record = { id, title: els.title.value.trim(), category: els.category.value, date: els.date.value,
-      start: els.start.value, end: els.end.value, location: els.location.value.trim(), note: els.note.value.trim() };
+      start: els.start.value, end: els.end.value, location: els.location.value.trim(), note: els.note.value.trim(), cancelled: els.cancelled.checked };
     if (!record.title || !record.date) { els.error.textContent = "Ajoute un nom et un jour pour cette activité."; return; }
     if (sharedMode) {
       const i = events.findIndex(item => item.id === id); if (i >= 0) events[i] = record; else events.push(record);
