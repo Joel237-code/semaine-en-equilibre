@@ -13,6 +13,7 @@ Une connexion Internet reste nécessaire pour se connecter et synchroniser les a
 - Parcourir les semaines avec les flèches ; les activités restent associées à leurs dates.
 - Les comptes autorisés retrouvent le même planning sur leurs appareils.
 - Les activités sont stockées dans Supabase ; l’application reste publiée sur GitHub Pages.
+- Les activités annulées restent visibles et peuvent être réactivées ou supprimées.
 - Les activités présentes dans le stockage local peuvent être importées depuis le navigateur qui les contient.
 
 ## Configuration Supabase
