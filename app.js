@@ -8,7 +8,8 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   const categories = {
     school: { label: "École", className: "school" },
     work: { label: "Travail", className: "work" },
-    spiritual: { label: "Spirituel", className: "spiritual" },
+    spiritual: { label: "Activité spirituelle", className: "spiritual" },
+    selfcare: { label: "Moment pour soi", className: "selfcare" },
     sport: { label: "Sport", className: "sport" },
     other: { label: "Autre activité", className: "other" }
   };
@@ -43,6 +44,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       school: document.querySelector("#school-count"),
       work: document.querySelector("#work-count"),
       spiritual: document.querySelector("#spirit-count"),
+      selfcare: document.querySelector("#selfcare-count"),
       sport: document.querySelector("#sport-count"),
       other: document.querySelector("#other-count")
     }
