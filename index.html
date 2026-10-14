@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=8">
-  <script type="module" src="app.js?v=8"></script>
+  <link rel="stylesheet" href="styles.css?v=9">
+  <script type="module" src="app.js?v=9"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -127,6 +127,12 @@
         </div>
         <div class="form-field"><label class="field-label" for="event-date">Jour</label><input class="text-input" id="event-date" name="date" type="date" required></div>
       </div>
+      <section class="day-agenda-preview" aria-label="Programme déjà prévu ce jour">
+        <strong class="day-agenda-title" id="day-agenda-title">Programme du jour</strong>
+        <p class="day-agenda-empty" id="day-agenda-empty">Rien de prévu ce jour.</p>
+        <ul class="day-agenda-list" id="day-agenda-list"></ul>
+        <p class="day-agenda-conflict" id="day-agenda-conflict" role="status" hidden></p>
+      </section>
       <div class="form-row">
         <div class="form-field"><label class="field-label" for="event-start">Début</label><input class="text-input" id="event-start" name="start" type="time" value="09:00" required></div>
         <div class="form-field"><label class="field-label" for="event-end">Fin</label><input class="text-input" id="event-end" name="end" type="time" value="10:00" required></div>
