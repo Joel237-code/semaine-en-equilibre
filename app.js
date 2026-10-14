@@ -20,6 +20,21 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     grid: document.querySelector("#week-grid"),
     dialog: document.querySelector("#event-dialog"),
     pageShell: document.querySelector(".page-shell"),
+    financePanel: document.querySelector("#finance-panel"),
+    financeMonth: document.querySelector("#finance-month"),
+    financeSalaryForm: document.querySelector("#salary-form"),
+    financeSalary: document.querySelector("#salary-amount"),
+    financeSalaryTotal: document.querySelector("#salary-total"),
+    financeExpenseForm: document.querySelector("#expense-form"),
+    financeExpenseLabel: document.querySelector("#expense-label"),
+    financeExpenseAmount: document.querySelector("#expense-amount"),
+    financeExpenseDate: document.querySelector("#expense-date"),
+    financeExpenseTotal: document.querySelector("#expenses-total"),
+    financeRemainder: document.querySelector("#money-left"),
+    financeExpenseList: document.querySelector("#expense-list"),
+    financeEmpty: document.querySelector("#expense-empty"),
+    financeMessage: document.querySelector("#finance-message"),
+    financeSetup: document.querySelector("#finance-setup"),
     shareOutput: document.querySelector("#share-output"),
     shareLink: document.querySelector("#share-link"),
     shareMessage: document.querySelector("#share-message"),
@@ -71,6 +86,10 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   let activeFilter = "all";
   let plannerId = null;
   let currentUser = null;
+  let financeMonth = dateKey(new Date()).slice(0, 7);
+  let monthlySalary = null;
+  let monthlyExpenses = [];
+  const moneyFormat = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 
   function showAuth(message = "") {
     authEls.panel.hidden = false; authEls.setupPanel.hidden = true; authEls.plannerApp.hidden = true;
@@ -83,6 +102,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   function showPlanner() {
     authEls.panel.hidden = true; authEls.setupPanel.hidden = true; authEls.plannerApp.hidden = false;
     authEls.signOut.hidden = !currentUser;
+    els.financePanel.hidden = sharedMode || !plannerId;
   }
   function toDatabaseEvent(event) {
     return { id: event.id, planner_id: plannerId, title: event.title, category: event.category,
@@ -103,6 +123,130 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     authEls.migrationPanel.hidden = !(events.length === 0 && localEvents.length > 0);
     render();
   }
+  function monthBounds(month) {
+    const [year, monthNumber] = month.split("-").map(Number);
+    return { start: `${month}-01`, end: dateKey(new Date(year, monthNumber, 1)) };
+  }
+  function defaultFinanceDate(month) {
+    const today = dateKey(new Date());
+    return today.startsWith(`${month}-`) ? today : `${month}-01`;
+  }
+  function renderFinance() {
+    const expensesTotal = monthlyExpenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+    els.financeSalary.value = monthlySalary === null ? "" : Number(monthlySalary).toFixed(2);
+    els.financeSalaryTotal.textContent = monthlySalary === null ? "À renseigner" : moneyFormat.format(Number(monthlySalary));
+    els.financeExpenseTotal.textContent = moneyFormat.format(expensesTotal);
+    els.financeRemainder.textContent = monthlySalary === null ? "—" : moneyFormat.format(Number(monthlySalary) - expensesTotal);
+    els.financeRemainder.classList.toggle("is-negative", monthlySalary !== null && Number(monthlySalary) - expensesTotal < 0);
+    els.financeExpenseList.replaceChildren();
+    els.financeEmpty.hidden = monthlyExpenses.length > 0;
+    for (const expense of monthlyExpenses) {
+      const row = document.createElement("li");
+      row.className = "expense-row";
+      const details = document.createElement("span");
+      details.className = "expense-details";
+      const label = document.createElement("strong");
+      label.textContent = expense.label;
+      const date = document.createElement("small");
+      date.textContent = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" }).format(parseDate(expense.expense_date));
+      details.append(label, date);
+      const amount = document.createElement("strong");
+      amount.className = "expense-amount";
+      amount.textContent = `−${moneyFormat.format(Number(expense.amount))}`;
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "expense-remove";
+      remove.textContent = "×";
+      remove.setAttribute("aria-label", `Supprimer la dépense ${expense.label}`);
+      remove.addEventListener("click", () => deleteExpense(expense.id));
+      row.append(details, amount, remove);
+      els.financeExpenseList.append(row);
+    }
+  }
+  async function loadFinanceData() {
+    if (!plannerId || sharedMode) return;
+    const { start, end } = monthBounds(financeMonth);
+    els.financeMessage.textContent = "Chargement du suivi financier…";
+    els.financeSetup.hidden = true;
+    els.financeEmpty.hidden = true;
+    els.financeExpenseList.replaceChildren();
+    try {
+      const [budgetResult, expensesResult] = await Promise.all([
+        supabase.from("planner_monthly_budgets").select("salary").eq("planner_id", plannerId).eq("month_start", start).maybeSingle(),
+        supabase.from("planner_expenses").select("id,label,amount,expense_date").eq("planner_id", plannerId)
+          .gte("expense_date", start).lt("expense_date", end).order("expense_date").order("created_at")
+      ]);
+      if (budgetResult.error) throw budgetResult.error;
+      if (expensesResult.error) throw expensesResult.error;
+      monthlySalary = budgetResult.data ? Number(budgetResult.data.salary) : null;
+      monthlyExpenses = expensesResult.data || [];
+      renderFinance();
+      els.financeMessage.textContent = "";
+    } catch (error) {
+      els.financeMessage.textContent = error.code === "42501"
+        ? "L’accès au suivi financier a été refusé. Vérifie les règles d’accès Supabase."
+        : "Impossible de charger le suivi financier. Vérifie ta connexion.";
+      els.financeSetup.hidden = !["PGRST205", "42P01"].includes(error.code);
+    }
+  }
+  async function saveMonthlySalary(event) {
+    event.preventDefault();
+    const salary = Number(els.financeSalary.value);
+    if (!els.financeSalary.value || !Number.isFinite(salary) || salary < 0) {
+      els.financeMessage.textContent = "Saisis un salaire mensuel valide.";
+      return;
+    }
+    const button = els.financeSalaryForm.querySelector("button[type=submit]");
+    button.disabled = true;
+    try {
+      const { error } = await supabase.from("planner_monthly_budgets").upsert({
+        planner_id: plannerId, month_start: `${financeMonth}-01`, salary
+      }, { onConflict: "planner_id,month_start" });
+      if (error) throw error;
+      await loadFinanceData();
+      els.financeMessage.textContent = "Salaire enregistré.";
+    } catch (error) {
+      els.financeMessage.textContent = error.message || "Le salaire n’a pas pu être enregistré.";
+    } finally { button.disabled = false; }
+  }
+  async function saveExpense(event) {
+    event.preventDefault();
+    const label = els.financeExpenseLabel.value.trim();
+    const amount = Number(els.financeExpenseAmount.value);
+    const expenseDate = els.financeExpenseDate.value;
+    if (!label || label.length > 80 || !Number.isFinite(amount) || amount <= 0 ||
+        !expenseDate || !expenseDate.startsWith(`${financeMonth}-`)) {
+      els.financeMessage.textContent = "Vérifie le nom, le montant et le jour de cette dépense.";
+      return;
+    }
+    const button = els.financeExpenseForm.querySelector("button[type=submit]");
+    button.disabled = true;
+    try {
+      const { error } = await supabase.from("planner_expenses").insert({
+        planner_id: plannerId, label, amount, expense_date: expenseDate
+      });
+      if (error) throw error;
+      els.financeExpenseLabel.value = "";
+      els.financeExpenseAmount.value = "";
+      els.financeExpenseDate.value = defaultFinanceDate(financeMonth);
+      await loadFinanceData();
+      els.financeMessage.textContent = "Dépense enregistrée.";
+    } catch (error) {
+      els.financeMessage.textContent = error.message || "La dépense n’a pas pu être enregistrée.";
+    } finally { button.disabled = false; }
+  }
+  async function deleteExpense(id) {
+    if (!window.confirm("Supprimer cette dépense ?")) return;
+    try {
+      const { error } = await supabase.from("planner_expenses").delete().eq("id", id).eq("planner_id", plannerId);
+      if (error) throw error;
+      await loadFinanceData();
+      els.financeMessage.textContent = "Dépense supprimée.";
+    } catch (error) {
+      els.financeMessage.textContent = error.message || "La dépense n’a pas pu être supprimée.";
+    }
+  }
+
   async function handleAuthenticated(user, force = false) {
     if (!user || (!force && currentUser?.id === user.id && plannerId)) return;
     currentUser = user;
@@ -111,7 +255,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     if (!memberships?.length) { plannerId = null; showSetup("Ce compte n’est pas encore relié au planning. Une étape de configuration dans Supabase reste à faire."); return; }
     plannerId = memberships[0].planner_id;
     showPlanner();
-    try { await loadCloudEvents(); }
+    try { await loadCloudEvents(); await loadFinanceData(); }
     catch (error) {
       authEls.setupMessage.textContent = error.message || "Impossible de charger les activités.";
       authEls.setupPanel.hidden = false; authEls.plannerApp.hidden = true; els.storageLabel.textContent = "Erreur de synchronisation";
@@ -501,6 +645,16 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   document.querySelector("#close-form").addEventListener("click", closeForm);
   document.querySelector("#cancel-form").addEventListener("click", closeForm);
   els.form.addEventListener("submit", handleSubmit);
+  els.financeMonth.value = financeMonth;
+  els.financeExpenseDate.value = defaultFinanceDate(financeMonth);
+  els.financeMonth.addEventListener("change", () => {
+    financeMonth = els.financeMonth.value || dateKey(new Date()).slice(0, 7);
+    els.financeExpenseDate.value = defaultFinanceDate(financeMonth);
+    monthlySalary = null; monthlyExpenses = []; renderFinance();
+    loadFinanceData();
+  });
+  els.financeSalaryForm.addEventListener("submit", saveMonthlySalary);
+  els.financeExpenseForm.addEventListener("submit", saveExpense);
   els.dialog.addEventListener("close", () => els.pageShell.classList.remove("is-event-form-open"));
   els.dialog.addEventListener("click", (event) => {
     if (event.target === els.dialog) closeForm();
