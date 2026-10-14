@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=6">
-  <script type="module" src="app.js?v=6"></script>
+  <link rel="stylesheet" href="styles.css?v=7">
+  <script type="module" src="app.js?v=7"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -71,7 +71,8 @@
         <div class="summary-row" aria-label="Résumé de la semaine">
           <div class="summary-card"><span class="summary-icon school-icon">▤</span><span><strong id="school-count">0</strong><small>cours prévus</small></span></div>
           <div class="summary-card"><span class="summary-icon other-icon">✦</span><span><strong id="other-count">0</strong><small>autres activités</small></span></div>
-          <div class="summary-card"><span class="summary-icon spirit-icon">✧</span><span><strong id="spirit-count">0</strong><small>moments pour soi</small></span></div>
+          <div class="summary-card"><span class="summary-icon spirit-icon">✧</span><span><strong id="spirit-count">0</strong><small>activités spirituelles</small></span></div>
+          <div class="summary-card"><span class="summary-icon selfcare-icon">♡</span><span><strong id="selfcare-count">0</strong><small>moments pour soi</small></span></div>
           <div class="summary-card"><span class="summary-icon sport-icon">⌁</span><span><strong id="sport-count">0</strong><small>séances sport</small></span></div>
           <div class="summary-card"><span class="summary-icon work-icon">↗</span><span><strong id="work-count">0</strong><small>temps de travail</small></span></div>
         </div>
@@ -80,7 +81,8 @@
           <div class="filters" role="group" aria-label="Filtrer les activités">
             <button class="filter-chip is-active" type="button" data-filter="all">Tout</button>
             <button class="filter-chip" type="button" data-filter="school"><span class="chip-dot school-dot"></span>École</button>
-            <button class="filter-chip" type="button" data-filter="spiritual"><span class="chip-dot spirit-dot"></span>Spirituel</button>
+            <button class="filter-chip" type="button" data-filter="spiritual"><span class="chip-dot spirit-dot"></span>Activité spirituelle</button>
+            <button class="filter-chip" type="button" data-filter="selfcare"><span class="chip-dot selfcare-dot"></span>Moment pour soi</button>
             <button class="filter-chip" type="button" data-filter="sport"><span class="chip-dot sport-dot"></span>Sport</button>
             <button class="filter-chip" type="button" data-filter="work"><span class="chip-dot work-dot"></span>Travail</button>
             <button class="filter-chip" type="button" data-filter="other"><span class="chip-dot other-dot"></span>Autre activité</button>
@@ -120,7 +122,7 @@
       <div class="form-row">
         <div class="form-field"><label class="field-label" for="event-category">Catégorie</label>
           <select class="text-input" id="event-category" name="category">
-            <option value="school">École</option><option value="work">Travail</option><option value="spiritual">Spirituel</option><option value="sport">Sport</option><option value="other">Autre activité</option>
+            <option value="school">École</option><option value="work">Travail</option><option value="spiritual">Activité spirituelle</option><option value="selfcare">Moment pour soi</option><option value="sport">Sport</option><option value="other">Autre activité</option>
           </select>
         </div>
         <div class="form-field"><label class="field-label" for="event-date">Jour</label><input class="text-input" id="event-date" name="date" type="date" required></div>
