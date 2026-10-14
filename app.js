@@ -40,6 +40,10 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     note: document.querySelector("#event-note"),
     cancelled: document.querySelector("#event-cancelled"),
     cancelledOption: document.querySelector("#cancelled-option"),
+    agendaTitle: document.querySelector("#day-agenda-title"),
+    agendaList: document.querySelector("#day-agenda-list"),
+    agendaEmpty: document.querySelector("#day-agenda-empty"),
+    agendaConflict: document.querySelector("#day-agenda-conflict"),
     error: document.querySelector("#form-error"),
     delete: document.querySelector("#delete-event"),
     counts: {
@@ -414,6 +418,49 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     }
   }
 
+  function renderDayAgendaPreview() {
+    const date = els.date.value;
+    els.agendaList.replaceChildren();
+    if (!date || !isValidDateKey(date)) {
+      els.agendaTitle.textContent = "Programme du jour";
+      els.agendaEmpty.hidden = false;
+      els.agendaConflict.hidden = true;
+      return;
+    }
+
+    const formattedDate = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" }).format(parseDate(date));
+    els.agendaTitle.textContent = `Programme du ${formattedDate}`;
+    const dayEvents = events
+      .filter((event) => event.date === date && event.id !== els.eventId.value)
+      .sort((a, b) => a.start.localeCompare(b.start));
+    els.agendaEmpty.hidden = dayEvents.length > 0;
+
+    for (const event of dayEvents) {
+      const item = document.createElement("li");
+      item.className = `day-agenda-item${event.cancelled ? " is-cancelled" : ""}`;
+      const time = document.createElement("span");
+      time.className = "day-agenda-time";
+      time.textContent = `${event.start} – ${event.end}`;
+      const description = document.createElement("span");
+      description.className = "day-agenda-description";
+      const title = document.createElement("strong");
+      title.textContent = event.title;
+      const category = document.createElement("small");
+      category.textContent = `${categories[event.category].label}${event.cancelled ? " · annulée" : ""}`;
+      description.append(title, category);
+      item.append(time, description);
+      els.agendaList.append(item);
+    }
+
+    const overlaps = !els.cancelled.checked && els.start.value && els.end.value && els.end.value > els.start.value
+      ? dayEvents.filter((event) => !event.cancelled && els.start.value < event.end && els.end.value > event.start)
+      : [];
+    els.agendaConflict.hidden = overlaps.length === 0;
+    if (overlaps.length) {
+      els.agendaConflict.textContent = `Attention, chevauchement avec : ${overlaps.map((event) => `${event.title} (${event.start}–${event.end})`).join(", ")}.`;
+    }
+  }
+
   function resetForm() {
     els.form.reset();
     els.eventId.value = "";
@@ -425,6 +472,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.cancelled.checked = false;
     els.cancelledOption.hidden = true;
     els.formTitle.textContent = "Ajouter une activité";
+    renderDayAgendaPreview();
   }
 
   function openNewForm() {
@@ -447,6 +495,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.cancelledOption.hidden = false;
     els.delete.hidden = false;
     els.formTitle.textContent = "Modifier l’activité";
+    renderDayAgendaPreview();
     els.dialog.showModal();
     els.title.focus();
   }
@@ -498,6 +547,10 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   document.querySelector("#close-form").addEventListener("click", closeForm);
   document.querySelector("#cancel-form").addEventListener("click", closeForm);
   els.form.addEventListener("submit", handleSubmit);
+  els.date.addEventListener("change", renderDayAgendaPreview);
+  els.start.addEventListener("input", renderDayAgendaPreview);
+  els.end.addEventListener("input", renderDayAgendaPreview);
+  els.cancelled.addEventListener("change", renderDayAgendaPreview);
   els.dialog.addEventListener("click", (event) => {
     if (event.target === els.dialog) closeForm();
   });
