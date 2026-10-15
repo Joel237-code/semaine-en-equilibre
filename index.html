@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=9">
-  <script type="module" src="app.js?v=9"></script>
+  <link rel="stylesheet" href="styles.css?v=10">
+  <script type="module" src="app.js?v=10"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -169,6 +169,7 @@
       <label class="field-label" for="event-note">Note <span class="optional">(facultatif)</span></label>
       <textarea class="text-input note-input" id="event-note" name="note" maxlength="240" rows="2" placeholder="Une petite précision…"></textarea>
       <label class="cancelled-toggle" id="cancelled-option" hidden><input id="event-cancelled" type="checkbox"><span><strong>Activité annulée</strong><small>Elle restera visible en gris et barrée.</small></span></label>
+      <label class="cancelled-toggle completed-toggle" id="completed-option" hidden><input id="event-completed" type="checkbox"><span><strong>Activité accomplie</strong><small>Une coche verte apparaîtra dans le calendrier.</small></span></label>
       <p class="form-error" id="form-error" role="alert"></p>
       <div class="dialog-actions">
         <button class="delete-button" id="delete-event" type="button" hidden>Supprimer</button>
