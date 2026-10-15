@@ -498,12 +498,12 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     title.className = "event-title";
     title.textContent = event.title;
     card.append(time, title);
-    if (event.completed && !event.cancelled) {
-      const check = document.createElement("span");
-      check.className = "event-status-check";
-      check.textContent = "✓";
-      check.setAttribute("aria-hidden", "true");
-      card.append(check);
+    if (event.cancelled || event.completed) {
+      const mark = document.createElement("span");
+      mark.className = `event-status-mark ${event.cancelled ? "is-cancelled" : "is-completed"}`;
+      mark.textContent = event.cancelled ? "×" : "✓";
+      mark.setAttribute("aria-hidden", "true");
+      card.append(mark);
     }
 
     if (event.location) {
