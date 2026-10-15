@@ -191,7 +191,10 @@ footer { display: flex; justify-content: center; align-items: center; gap: 8px; 
 }
 
 .event-card.is-completed { box-shadow: inset 0 0 0 1px #b8d8bd; }
-.event-card.is-completed .event-title { color: #416c51; padding-right: 16px; }
-.event-status-check { position: absolute; top: 5px; right: 6px; display: grid; width: 17px; height: 17px; place-items: center; border-radius: 50%; background: #e2f1e4; color: #2f8245; font-size: 12px; font-weight: 800; line-height: 1; }
+.event-card.is-completed .event-title { color: #416c51; padding-right: 20px; }
+.event-card.is-cancelled .event-title { padding-right: 20px; }
+.event-status-mark { position: absolute; top: 5px; right: 6px; display: grid; width: 17px; height: 17px; place-items: center; border-radius: 50%; font-size: 12px; font-weight: 800; line-height: 1; }
+.event-status-mark.is-completed { background: #e2f1e4; color: #2f8245; }
+.event-status-mark.is-cancelled { background: #fae7e4; color: #b34b45; font-size: 14px; }
 .completed-toggle { border-color: #dcebdc; background: #f0f7ef; }
 .completed-toggle input { accent-color: #42834d; }
