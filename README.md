@@ -13,7 +13,7 @@ Une connexion Internet reste nécessaire pour se connecter et synchroniser les a
 - Parcourir les semaines avec les flèches ; les activités restent associées à leurs dates.
 - Les comptes autorisés retrouvent le même planning sur leurs appareils.
 - Les activités et le suivi financier sont stockés dans Supabase ; l’application reste publiée sur GitHub Pages.
-- Les activités annulées restent visibles et peuvent être réactivées ou supprimées.
+- Les activités annulées restent visibles et peuvent être réactivées ou supprimées. Les activités accomplies affichent une coche verte.
 - Les activités présentes dans le stockage local peuvent être importées depuis le navigateur qui les contient.
 
 ## Configuration Supabase
@@ -23,6 +23,8 @@ Le frontend utilise l’URL du projet et une clé publishable. La clé secret/se
 La base utilise les tables `planners`, `planner_members` et `activities`, protégées par Row Level Security. Chaque compte doit être membre du planning. Après création des comptes, ajoute leurs identifiants à `planner_members` dans le SQL Editor.
 
 Pour activer le suivi financier partagé, exécute une fois le script `supabase/migrations/20261014010000_add_financial_tracking.sql` dans le SQL Editor de Supabase. Il crée les tables pour le salaire mensuel et les dépenses et limite leur accès aux membres du planning.
+
+Pour enregistrer le statut des activités accomplies, exécute aussi `supabase/migrations/20261015000000_add_completed_status.sql` dans le SQL Editor.
 
 Ajoute l’URL GitHub Pages aux URL de redirection autorisées de Supabase :
 `https://joel237-code.github.io/semaine-en-equilibre/`
