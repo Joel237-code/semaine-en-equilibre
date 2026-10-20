@@ -516,7 +516,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       const completed = records.filter(event => event.completed && !event.cancelled).length;
       const row = document.createElement("tr");
       const heading = document.createElement("th"); heading.scope = "row"; heading.textContent = label; row.append(heading);
-      for (const value of [records.length, records.length - cancelled - completed, cancelled, completed, records.length ? `${Math.round(completed / records.length * 100)} %` : "—"]) {
+      for (const value of [records.length, cancelled, completed, records.length ? `${Math.round(completed / records.length * 100)} %` : "—"]) {
         const cell = document.createElement("td"); cell.textContent = value; row.append(cell);
       }
       report.body.append(row);
