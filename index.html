@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=11">
-  <script type="module" src="app.js?v=11"></script>
+  <link rel="stylesheet" href="styles.css?v=12">
+  <script type="module" src="app.js?v=12"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -103,6 +103,22 @@
         </div>
         <div class="week-grid" id="week-grid" aria-live="polite"></div>
         <p class="privacy-note"><span aria-hidden="true">◈</span> Les activités sont synchronisées dans le cloud pour les comptes autorisés. Un lien de copie reste visible par toute personne qui le reçoit.</p>
+      </section>
+      <section class="activity-report" aria-labelledby="report-heading">
+        <p class="eyebrow">FAIRE LE POINT</p><h2 id="report-heading">Rapport des activités</h2>
+        <div class="report-controls">
+          <label>Période <select class="text-input" id="report-period"><option value="week">Semaine affichée</option><option value="month">Un mois</option><option value="custom">Dates personnalisées</option><option value="all">Tout l’historique</option></select></label>
+          <label id="report-month-field" hidden>Mois <input class="text-input" id="report-month" type="month"></label>
+          <label id="report-start-field" hidden>Du <input class="text-input" id="report-start" type="date"></label>
+          <label id="report-end-field" hidden>Au <input class="text-input" id="report-end" type="date"></label>
+        </div>
+        <p id="report-message" role="status" aria-live="polite"></p>
+        <p class="optional">Enregistrées = toutes les activités. À réaliser = ni annulées ni accomplies. Les activités supprimées ne sont pas comptabilisées.</p>
+        <div class="report-table-wrap"><table class="report-table">
+          <caption class="field-label">Bilan général et par catégorie</caption>
+          <thead><tr><th scope="col">Catégorie</th><th scope="col">Enregistrées</th><th scope="col">À réaliser</th><th scope="col">Annulées</th><th scope="col">Accomplies / exécutées</th><th scope="col">Taux d’accomplissement</th></tr></thead>
+          <tbody id="report-body"></tbody>
+        </table></div>
       </section>
       <section class="finance-panel" id="finance-panel" aria-labelledby="finance-heading" hidden>
         <header class="finance-heading">

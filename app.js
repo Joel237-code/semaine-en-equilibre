@@ -119,11 +119,18 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       cancelled: row.cancelled === true, completed: row.completed === true };
   }
   async function loadCloudEvents() {
-    const { data, error } = await supabase.from("activities")
-      .select("id,title,category,activity_date,start_time,end_time,location,note,cancelled,completed")
-      .eq("planner_id", plannerId).order("activity_date").order("start_time");
-    if (error) throw error;
-    events = (data || []).map(fromDatabaseEvent);
+    const rows = [];
+    const pageSize = 500;
+    for (let offset = 0; ; offset += pageSize) {
+      const { data, error } = await supabase.from("activities")
+        .select("id,title,category,activity_date,start_time,end_time,location,note,cancelled,completed")
+        .eq("planner_id", plannerId).order("activity_date").order("start_time").order("id")
+        .range(offset, offset + pageSize - 1);
+      if (error) throw error;
+      rows.push(...(data || []));
+      if (!data || data.length < pageSize) break;
+    }
+    events = rows.map(fromDatabaseEvent);
     authEls.migrationPanel.hidden = !(events.length === 0 && localEvents.length > 0);
     render();
   }
@@ -471,7 +478,49 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.leaveShared.hidden = !sharedMode;
     els.shareNotice.hidden = !sharedMode;
     renderSummary();
+    renderReport();
     renderDays();
+  }
+
+  const report = Object.fromEntries(["period", "month", "start", "end", "message", "body"].map(name => [name, document.querySelector(`#report-${name}`)]));
+  report.month.value = financeMonth;
+  report.start.value = dateKey(weekStart);
+  report.end.value = dateKey(addDays(weekStart, 6));
+  for (const field of [report.period, report.month, report.start, report.end]) field.addEventListener("change", renderReport);
+
+  function renderReport() {
+    const period = report.period.value;
+    for (const name of ["month", "start", "end"]) {
+      document.querySelector(`#report-${name}-field`).hidden = name === "month" ? period !== "month" : period !== "custom";
+    }
+    let start = "", end = "";
+    if (period === "week") { start = dateKey(weekStart); end = dateKey(addDays(weekStart, 6)); }
+    if (period === "month" && report.month.value) {
+      const bounds = monthBounds(report.month.value);
+      start = bounds.start;
+      end = dateKey(addDays(parseDate(bounds.end), -1));
+    }
+    if (period === "custom") { start = report.start.value; end = report.end.value; }
+    report.body.replaceChildren();
+    if ((period === "month" && !report.month.value) || (period === "custom" && (!start || !end || start > end))) {
+      report.message.textContent = "Choisis une période valide : la date de début doit précéder ou être égale à la date de fin.";
+      return;
+    }
+    const selected = events.filter(event => (!start || event.date >= start) && (!end || event.date <= end));
+    report.message.textContent = (sharedMode ? "Copie partagée : seules les activités présentes dans cette copie sont comptées. " : "") +
+      (selected.length ? `${selected.length} activité(s) enregistrée(s). ` : "Aucune activité pour cette période. ") +
+      "Taux = accomplies / enregistrées, activités annulées incluses.";
+    for (const [category, label] of [["all", "Général"], ...Object.entries(categories).map(([key, value]) => [key, value.label])]) {
+      const records = category === "all" ? selected : selected.filter(event => event.category === category);
+      const cancelled = records.filter(event => event.cancelled).length;
+      const completed = records.filter(event => event.completed && !event.cancelled).length;
+      const row = document.createElement("tr");
+      const heading = document.createElement("th"); heading.scope = "row"; heading.textContent = label; row.append(heading);
+      for (const value of [records.length, records.length - cancelled - completed, cancelled, completed, records.length ? `${Math.round(completed / records.length * 100)} %` : "—"]) {
+        const cell = document.createElement("td"); cell.textContent = value; row.append(cell);
+      }
+      report.body.append(row);
+    }
   }
 
   function renderSummary() {

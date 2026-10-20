@@ -30,3 +30,7 @@ Ajoute l’URL GitHub Pages aux URL de redirection autorisées de Supabase :
 `https://joel237-code.github.io/semaine-en-equilibre/`
 
 Site : <https://joel237-code.github.io/semaine-en-equilibre/>
+
+## Rapport des activités
+
+Le rapport sous le planning présente le total des activités enregistrées et leur répartition (à réaliser, annulées, accomplies), globalement et par catégorie. Choisis la semaine affichée, un mois, des dates personnalisées ou tout l’historique. Le taux d’accomplissement correspond aux activités accomplies divisées par toutes les activités enregistrées, annulations incluses. Les activités supprimées sont exclues. Une copie partagée ne contient que sa semaine, pas l’historique du planning. Aucune migration supplémentaire n’est nécessaire.
