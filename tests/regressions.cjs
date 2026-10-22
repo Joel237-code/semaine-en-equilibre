@@ -69,3 +69,15 @@ test('Bill confirmation writes the occurrence only once per action with its refe
   payload=null; context.paidBillIds.add('b');
   await context.addBillExpense({id:'b'},'2026-10-03',{}); assert.equal(payload,null);
 });
+test('Bill fields reset after successful writes and remain intact after errors', async () => {
+  for (const error of [null, {code:'42501'}, {code:'23505'}]) {
+    let resets=0;
+    const context=vm.createContext({financeMonth:'2026-10',plannerId:'p',document:{querySelector:()=>({textContent:''})},
+      loadFinanceData:async()=>{},errorMessage:()=> 'Erreur'});
+    vm.runInContext(fn('changeBill'),context);
+    const button={};
+    await context.changeBill(button,async()=>({error}),'Enregistrée',()=>{resets++});
+    assert.equal(resets,error ? 0 : 1);
+    assert.equal(button.disabled,false);
+  }
+});

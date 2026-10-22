@@ -46,6 +46,8 @@ try:
   page.locator('#bill-form button').click()
   suggestion=page.locator('#bill-suggestions .bill-row')
   suggestion.wait_for();assert 'Électricité' in suggestion.inner_text()
+  for field in ['#bill-label','#bill-amount','#bill-day']:
+   assert page.locator(field).input_value() == ''
   assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
   suggestion.locator('button').click()
   page.wait_for_function("document.querySelector('#expenses-total').textContent.includes('45')")

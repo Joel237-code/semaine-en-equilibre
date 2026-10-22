@@ -285,13 +285,14 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     }
     document.querySelector("#bill-status").textContent = !billsReady ? "Chargement des factures…" : suggestions.children.length ? "À confirmer : ces factures ne sont pas encore dans tes dépenses." : "Aucune facture en attente pour cette période.";
   }
-  async function changeBill(button, action, success) {
+  async function changeBill(button, action, success, onSuccess = () => {}) {
     const month = financeMonth, planner = plannerId;
     button.disabled = true;
     try {
       const { error } = await action();
       if (month !== financeMonth || planner !== plannerId) return;
       if (error && error.code !== "23505") throw error;
+      if (!error) onSuccess();
       await loadFinanceData();
       if (month === financeMonth && planner === plannerId) document.querySelector("#bill-status").textContent = error ? "Cette facture est déjà ajoutée pour ce mois." : success;
     } catch (error) {
@@ -312,7 +313,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     const label = document.querySelector("#bill-label").value.trim();
     const amount = Number(document.querySelector("#bill-amount").value), due_day = Number(document.querySelector("#bill-day").value);
     if (!label || label.length > 80 || !Number.isFinite(amount) || amount <= 0 || !Number.isInteger(due_day) || due_day < 1 || due_day > 31) return;
-    await changeBill(event.target.querySelector("button"), () => supabase.from("planner_recurring_bills").insert({ planner_id: plannerId, label, amount, due_day, start_month: `${financeMonth}-01` }), "Facture mensuelle enregistrée.");
+    await changeBill(event.target.querySelector("button"), () => supabase.from("planner_recurring_bills").insert({ planner_id: plannerId, label, amount, due_day, start_month: `${financeMonth}-01` }), "Facture mensuelle enregistrée.", () => event.target.reset());
   });
   // Refresh due proposals after midnight or when returning to an already open app.
   document.addEventListener("visibilitychange", () => { if (!document.hidden && plannerId && !sharedMode) loadFinanceData(); });
