@@ -35,6 +35,10 @@ try:
             panel = page.locator('#finance-panel').bounding_box()
             assert field['x'] >= panel['x'] and field['x'] + field['width'] <= panel['x'] + panel['width'], width
             if width <= 620:
+                days = page.locator('.day-column')
+                first, second, third = [days.nth(i).bounding_box() for i in range(3)]
+                assert abs(first['y'] - second['y']) < 1 and third['y'] > first['y'], width
+                assert second['x'] > first['x'], width
                 assert page.locator('#report-cards').is_visible()
                 assert page.locator('.report-card').count() == 7
                 assert page.locator('.report-card dd').all_text_contents()[:4] == ['1', '0', '1', '100 %']
