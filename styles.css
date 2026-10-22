@@ -230,32 +230,9 @@ footer { display: flex; justify-content: center; align-items: center; gap: 8px; 
   .intro h1 { font-size: 34px; }
   .intro-text { font-size: 15px; line-height: 1.6; }
   .balance-art { display: none; }
-  .planner, .finance-panel, .activity-report { padding: 20px 14px; margin-bottom: 24px; }
-  .planner-heading { align-items: stretch; flex-direction: column; gap: 16px; }
-  .planner h2 { font-size: 23px; line-height: 1.3; }
-  .week-controls { justify-content: space-between; gap: 8px; }
-  .today-button { font-size: 14px; flex: 1; }
-  .summary-card { min-width: 0; padding: 10px 8px; }
-  .summary-card small { font-size: 12px; color: #647268; }
-  .summary-card strong { font-size: 20px; }
-  .summary-icon { flex: 0 0 28px; width: 28px; height: 32px; }
-  .agenda-toolbar { gap: 14px; }
-  .filters { gap: 6px; }
-  .filter-chip { font-size: 13px; padding: 10px; min-height: 44px; }
-  .toolbar-actions, .add-button { width: 100%; }
+  .finance-panel, .activity-report { padding: 20px 14px; margin-bottom: 24px; }
   .add-button, .save-button, .cancel-button, .delete-button, .copy-button { font-size: 15px; min-height: 48px; }
-  .week-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
-  .day-column { min-height: 0; min-width: 0; padding: 10px; }
-  .day-heading { flex-direction: column; align-items: flex-start; gap: 3px; min-height: 0; margin-bottom: 8px; }
-  .day-name { font-size: 12px; }
-  .day-date { font-size: 14px; }
-  .event-card { min-height: 56px; padding: 10px 8px 10px 10px; }
-  .event-title { font-size: 13px; line-height: 1.4; }
-  .event-time { font-size: 12px; margin-bottom: 5px; }
-  .event-location { font-size: 12px; }
-  .event-status-mark { position: static; float: right; width: 20px; height: 20px; margin: 0 0 4px 4px; font-size: 14px; }
-  .empty-day { text-align: left; padding: 2px 0; font-size: 13px; color: #647268; }
-  .privacy-note, .finance-message, .finance-setup, .finance-empty, .share-notice { font-size: 13px; line-height: 1.6; }
+  .finance-message, .finance-setup, .finance-empty { font-size: 13px; line-height: 1.6; }
   .activity-report .optional { color: #647268; font-size: 13px; line-height: 1.6; }
   .report-table-wrap { display: none; }
   .report-cards { display: grid; gap: 12px; margin-top: 20px; }
@@ -291,7 +268,6 @@ footer { display: flex; justify-content: center; align-items: center; gap: 8px; 
 }
 @media (max-width: 360px) {
   .form-row { grid-template-columns: minmax(0,1fr); }
-  .summary-icon { display: none; }
   .expense-row { grid-template-columns: minmax(0,1fr) 44px; }
   .expense-details { grid-column: 1; }
   .expense-amount { grid-column: 1; grid-row: 2; }
@@ -327,4 +303,12 @@ input[type="month"]::-webkit-date-and-time-value { min-width: 0; text-align: lef
 @media (max-width: 620px) {
   .month-picker { flex: none; width: 100%; grid-template-columns: minmax(0,1fr); gap: 8px; }
   .month-picker input[type="month"] { appearance: none; -webkit-appearance: none; }
+}
+
+/* Keep the planning presentation from before the mobile redesign. */
+@media (max-width: 620px) {
+  .planner button { min-height: 0; }
+  .planner .icon-button { min-width: 0; width: 32px; height: 34px; }
+  .planner .today-button { height: 34px; }
+  .planner .add-button { min-height: 39px; font-size: 11px; }
 }

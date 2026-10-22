@@ -28,6 +28,7 @@ try:
             page.route('https://cdn.jsdelivr.net/**', lambda r: r.fulfill(body='export function createClient(){return {}}', content_type='application/javascript'))
             page.route('https://fonts.googleapis.com/**', lambda r: r.abort())
             page.goto(f'http://127.0.0.1:{server.server_port}/#share={encoded}', wait_until='networkidle')
+            page.locator(".day-column").first.wait_for()
             # Expose finance layout without accessing a real account or database.
             page.evaluate("document.querySelector('#finance-panel').hidden=false")
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), width
@@ -39,11 +40,12 @@ try:
                 first, second, third = [days.nth(i).bounding_box() for i in range(3)]
                 assert abs(first['y'] - second['y']) < 1 and third['y'] > first['y'], width
                 assert second['x'] > first['x'], width
+                assert page.locator('.event-title').evaluate('(e)=>getComputedStyle(e).fontSize') == '10px'
                 assert page.locator('#report-cards').is_visible()
                 assert page.locator('.report-card').count() == 7
                 assert page.locator('.report-card dd').all_text_contents()[:4] == ['1', '0', '1', '100 %']
                 assert not page.locator('.report-table-wrap').is_visible()
-                assert page.evaluate("[...document.querySelectorAll('button')].filter(e=>e.getClientRects().length).every(e=>e.getBoundingClientRect().height>=44)")
+                assert page.evaluate("[...document.querySelectorAll('button')].filter(e=>e.getClientRects().length && !e.closest('.planner')).every(e=>e.getBoundingClientRect().height>=44)")
                 page.locator('.mobile-sections a[href="#report-heading"]').click()
                 assert page.locator('#report-heading').bounding_box()['y'] >= 60
             else:
