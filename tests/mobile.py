@@ -31,6 +31,9 @@ try:
             # Expose finance layout without accessing a real account or database.
             page.evaluate("document.querySelector('#finance-panel').hidden=false")
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), width
+            field = page.locator('#finance-month').bounding_box()
+            panel = page.locator('#finance-panel').bounding_box()
+            assert field['x'] >= panel['x'] and field['x'] + field['width'] <= panel['x'] + panel['width'], width
             if width <= 620:
                 assert page.locator('#report-cards').is_visible()
                 assert page.locator('.report-card').count() == 7

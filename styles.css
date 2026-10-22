@@ -316,3 +316,15 @@ footer { display: flex; justify-content: center; align-items: center; gap: 8px; 
 .bill-settings .save-button { margin-top: 16px; }
 button:disabled { opacity: .55; cursor: not-allowed; }
 @media(max-width:620px) { .bill-row { align-items: stretch; flex-direction: column; } .bill-row button { width: 100%; } .bill-settings { padding: 14px; } }
+
+/* Prevent native month controls from imposing their intrinsic width (Safari). */
+.finance-heading > *, .month-picker, .report-controls > label { min-width: 0; max-width: 100%; }
+.month-picker { flex: 0 1 220px; }
+.month-picker input[type="month"], .report-controls input[type="month"] {
+  display: block; width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;
+}
+input[type="month"]::-webkit-date-and-time-value { min-width: 0; text-align: left; }
+@media (max-width: 620px) {
+  .month-picker { flex: none; width: 100%; grid-template-columns: minmax(0,1fr); gap: 8px; }
+  .month-picker input[type="month"] { appearance: none; -webkit-appearance: none; }
+}
