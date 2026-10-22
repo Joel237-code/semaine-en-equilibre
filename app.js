@@ -82,16 +82,45 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   const sharedSnapshot = readSharedSnapshot();
   const sharedMode = Boolean(sharedSnapshot);
   const sharedDraftKey = sharedSnapshot ? `${STORAGE_KEY}.shared.${sharedSnapshot.encoded}` : "";
-  const localEvents = sharedSnapshot ? [] : loadEvents();
+  // The legacy cache has no account owner: never offer it to another user.
+  const localEvents = [];
+  function clearLegacyCache() {
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* Storage may be disabled. */ }
+  }
+  if (!sharedSnapshot) clearLegacyCache();
   let events = sharedSnapshot ? loadEvents(sharedDraftKey, sharedSnapshot.events) : [...localEvents];
   let weekStart = sharedSnapshot ? parseDate(sharedSnapshot.week) : mondayOf(new Date());
   let activeFilter = "all";
   let plannerId = null;
   let currentUser = null;
   let financeMonth = dateKey(new Date()).slice(0, 7);
+  let financeRequest = 0;
   let monthlySalary = null;
   let monthlyExpenses = [];
   const moneyFormat = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
+
+  function errorMessage(error, fallback) {
+    const code = String(error?.code || "");
+    const messages = {
+      invalid_credentials: "Adresse e-mail ou mot de passe incorrect.",
+      email_not_confirmed: "Confirme ton adresse e-mail avant de te connecter.",
+      user_already_exists: "Un compte existe déjà avec cette adresse e-mail.",
+      email_exists: "Un compte existe déjà avec cette adresse e-mail.",
+      weak_password: "Choisis un mot de passe plus robuste.",
+      over_request_rate_limit: "Trop de tentatives. Réessaie dans quelques instants.",
+      over_email_send_rate_limit: "Trop d’e-mails demandés. Réessaie dans quelques instants.",
+      session_expired: "Ta session a expiré. Reconnecte-toi.",
+      "42501": "Accès refusé. Vérifie les droits de ton compte sur ce planning.",
+      "23514": "Les données saisies ne respectent pas les règles du planning.",
+      "23505": "Cet enregistrement existe déjà.",
+      PGRST205: "La configuration de la base de données est incomplète.",
+      "42P01": "La configuration de la base de données est incomplète."
+    };
+    if (messages[code]) return messages[code];
+    if (error?.status === 429) return "Trop de tentatives. Réessaie dans quelques instants.";
+    if (error?.name === "TypeError" || error?.name === "AuthRetryableFetchError") return "Connexion impossible. Vérifie ta connexion Internet puis réessaie.";
+    return fallback;
+  }
 
   function showAuth(message = "") {
     authEls.panel.hidden = false; authEls.setupPanel.hidden = true; authEls.plannerApp.hidden = true;
@@ -176,7 +205,14 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   }
   async function loadFinanceData() {
     if (!plannerId || sharedMode) return;
-    const { start, end } = monthBounds(financeMonth);
+    const request = ++financeRequest;
+    const requestedPlanner = plannerId;
+    const requestedMonth = financeMonth;
+    const isCurrent = () => request === financeRequest && plannerId === requestedPlanner && financeMonth === requestedMonth;
+    const { start, end } = monthBounds(requestedMonth);
+    monthlySalary = null;
+    monthlyExpenses = [];
+    renderFinance();
     els.financeMessage.textContent = "Chargement du suivi financier…";
     els.financeSetup.hidden = true;
     els.financeEmpty.hidden = true;
@@ -187,6 +223,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         supabase.from("planner_expenses").select("id,label,amount,expense_date").eq("planner_id", plannerId)
           .gte("expense_date", start).lt("expense_date", end).order("expense_date").order("created_at")
       ]);
+      if (!isCurrent()) return;
       if (budgetResult.error) throw budgetResult.error;
       if (expensesResult.error) throw expensesResult.error;
       monthlySalary = budgetResult.data ? Number(budgetResult.data.salary) : null;
@@ -194,6 +231,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       renderFinance();
       els.financeMessage.textContent = "";
     } catch (error) {
+      if (!isCurrent()) return;
       els.financeMessage.textContent = error.code === "42501"
         ? "L’accès au suivi financier a été refusé. Vérifie les règles d’accès Supabase."
         : "Impossible de charger le suivi financier. Vérifie ta connexion.";
@@ -209,15 +247,19 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     }
     const button = els.financeSalaryForm.querySelector("button[type=submit]");
     button.disabled = true;
+    const savedMonth = financeMonth, savedPlanner = plannerId;
+    const isCurrent = () => savedMonth === financeMonth && savedPlanner === plannerId;
     try {
       const { error } = await supabase.from("planner_monthly_budgets").upsert({
-        planner_id: plannerId, month_start: `${financeMonth}-01`, salary
+        planner_id: plannerId, month_start: `${financeMonth}-01`, salary, updated_at: new Date().toISOString()
       }, { onConflict: "planner_id,month_start" });
       if (error) throw error;
+      if (!isCurrent()) return;
       await loadFinanceData();
-      els.financeMessage.textContent = "Salaire enregistré.";
+      if (isCurrent()) els.financeMessage.textContent = "Salaire enregistré.";
     } catch (error) {
-      els.financeMessage.textContent = error.message || "Le salaire n’a pas pu être enregistré.";
+      if (!isCurrent()) return;
+      els.financeMessage.textContent = errorMessage(error, "Le salaire n’a pas pu être enregistré.");
     } finally { button.disabled = false; }
   }
   async function saveExpense(event) {
@@ -232,29 +274,37 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     }
     const button = els.financeExpenseForm.querySelector("button[type=submit]");
     button.disabled = true;
+    const savedMonth = financeMonth, savedPlanner = plannerId;
+    const isCurrent = () => savedMonth === financeMonth && savedPlanner === plannerId;
     try {
       const { error } = await supabase.from("planner_expenses").insert({
         planner_id: plannerId, label, amount, expense_date: expenseDate
       });
       if (error) throw error;
+      if (!isCurrent()) return;
       els.financeExpenseLabel.value = "";
       els.financeExpenseAmount.value = "";
       els.financeExpenseDate.value = defaultFinanceDate(financeMonth);
       await loadFinanceData();
-      els.financeMessage.textContent = "Dépense enregistrée.";
+      if (isCurrent()) els.financeMessage.textContent = "Dépense enregistrée.";
     } catch (error) {
-      els.financeMessage.textContent = error.message || "La dépense n’a pas pu être enregistrée.";
+      if (!isCurrent()) return;
+      els.financeMessage.textContent = errorMessage(error, "La dépense n’a pas pu être enregistrée.");
     } finally { button.disabled = false; }
   }
   async function deleteExpense(id) {
     if (!window.confirm("Supprimer cette dépense ?")) return;
+    const savedMonth = financeMonth, savedPlanner = plannerId;
+    const isCurrent = () => savedMonth === financeMonth && savedPlanner === plannerId;
     try {
       const { error } = await supabase.from("planner_expenses").delete().eq("id", id).eq("planner_id", plannerId);
       if (error) throw error;
+      if (!isCurrent()) return;
       await loadFinanceData();
-      els.financeMessage.textContent = "Dépense supprimée.";
+      if (isCurrent()) els.financeMessage.textContent = "Dépense supprimée.";
     } catch (error) {
-      els.financeMessage.textContent = error.message || "La dépense n’a pas pu être supprimée.";
+      if (!isCurrent()) return;
+      els.financeMessage.textContent = errorMessage(error, "La dépense n’a pas pu être supprimée.");
     }
   }
 
@@ -268,7 +318,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     showPlanner();
     try { await loadCloudEvents(); await loadFinanceData(); }
     catch (error) {
-      authEls.setupMessage.textContent = error.message || "Impossible de charger les activités.";
+      authEls.setupMessage.textContent = errorMessage(error, "Impossible de charger les activités.");
       authEls.setupPanel.hidden = false; authEls.plannerApp.hidden = true; els.storageLabel.textContent = "Erreur de synchronisation";
     }
   }
@@ -276,7 +326,10 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     if (sharedMode) { showPlanner(); render(); return; }
     const { data, error } = await supabase.auth.getSession();
     supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT") { currentUser = null; plannerId = null; showAuth(); }
+      if (event === "SIGNED_OUT") {
+        ++financeRequest; currentUser = null; plannerId = null; events = [];
+        monthlySalary = null; monthlyExpenses = []; clearLegacyCache(); showAuth();
+      }
       else if (session?.user && event !== "INITIAL_SESSION") window.setTimeout(() => handleAuthenticated(session.user), 0);
     });
     if (error) { showAuth("Impossible de vérifier la session. Recharge la page."); return; }
@@ -299,7 +352,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         if (error) throw error;
         await handleAuthenticated(data.user, true);
       }
-    } catch (error) { authEls.message.textContent = error.message || "La connexion a échoué."; }
+    } catch (error) { authEls.message.textContent = errorMessage(error, "La connexion a échoué."); }
     finally { authEls.signIn.disabled = false; authEls.signUp.disabled = false; }
   }
   async function importLocalEvents() {
@@ -310,7 +363,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       const { error } = await supabase.from("activities").insert(records);
       if (error) throw error;
       await loadCloudEvents();
-    } catch (error) { authEls.setupMessage.textContent = error.message || "L’import a échoué."; }
+    } catch (error) { authEls.setupMessage.textContent = errorMessage(error, "L’import a échoué."); }
     finally { authEls.importLocal.disabled = false; }
   }
 
@@ -696,9 +749,9 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       const { error } = await supabase.from("activities").upsert(toDatabaseEvent(record));
       if (error) throw error;
       const i = events.findIndex(item => item.id === id); if (i >= 0) events[i] = record; else events.push(record);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+      clearLegacyCache();
       weekStart = mondayOf(parseDate(record.date)); closeForm(); render();
-    } catch (error) { els.error.textContent = error.message || "L’activité n’a pas pu être enregistrée."; }
+    } catch (error) { els.error.textContent = errorMessage(error, "L’activité n’a pas pu être enregistrée."); }
     finally { saveButton.disabled = false; }
   }
 
@@ -745,7 +798,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       const { error } = await supabase.from("activities").delete().eq("id", id).eq("planner_id", plannerId);
       if (error) throw error;
       events = events.filter(event => event.id !== id); closeForm(); render();
-    } catch (error) { els.error.textContent = error.message || "L’activité n’a pas pu être supprimée."; }
+    } catch (error) { els.error.textContent = errorMessage(error, "L’activité n’a pas pu être supprimée."); }
   });
 
   document.querySelectorAll(".filter-chip").forEach((button) => {
@@ -763,7 +816,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   authEls.form.addEventListener("submit", event => { event.preventDefault(); authenticate("signin"); });
   authEls.signIn.addEventListener("click", () => authenticate("signin"));
   authEls.signUp.addEventListener("click", () => authenticate("signup"));
-  authEls.signOut.addEventListener("click", async () => { const { error } = await supabase.auth.signOut(); if (error) authEls.message.textContent = error.message; });
+  authEls.signOut.addEventListener("click", async () => { const { error } = await supabase.auth.signOut(); if (error) authEls.message.textContent = errorMessage(error, "La déconnexion a échoué. Réessaie."); });
   authEls.retryPlanner.addEventListener("click", () => currentUser && handleAuthenticated(currentUser, true));
   authEls.importLocal.addEventListener("click", importLocalEvents);
   await bootstrap();

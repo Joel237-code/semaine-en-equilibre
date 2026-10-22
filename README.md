@@ -14,7 +14,7 @@ Une connexion Internet reste nécessaire pour se connecter et synchroniser les a
 - Les comptes autorisés retrouvent le même planning sur leurs appareils.
 - Les activités et le suivi financier sont stockés dans Supabase ; l’application reste publiée sur GitHub Pages.
 - Les activités annulées restent visibles et peuvent être réactivées ou supprimées. Les activités accomplies affichent une coche verte.
-- Les activités présentes dans le stockage local peuvent être importées depuis le navigateur qui les contient.
+- Les activités Supabase ne sont pas recopiées dans le stockage local. L’ancienne copie sans propriétaire est supprimée pour éviter un import entre comptes. Les copies de semaines partagées restent locales et séparées.
 
 ## Configuration Supabase
 
@@ -34,3 +34,5 @@ Site : <https://joel237-code.github.io/semaine-en-equilibre/>
 ## Rapport des activités
 
 Le rapport sous le planning présente le total des activités enregistrées ainsi que les activités annulées et accomplies, globalement et par catégorie. Choisis la semaine affichée, un mois, des dates personnalisées ou tout l’historique. Le taux d’accomplissement correspond aux activités accomplies divisées par toutes les activités enregistrées, annulations incluses. Les activités supprimées sont exclues. Une copie partagée ne contient que sa semaine, pas l’historique du planning. Aucune migration supplémentaire n’est nécessaire.
+
+Les chargements financiers ignorent les réponses des mois précédemment sélectionnés. À chaque enregistrement du salaire, le navigateur envoie `updated_at` (date UTC de son horloge). Cela ne remplace pas un trigger serveur pour les modifications effectuées hors de cette application ; aucun changement de structure SQL n’est appliqué.
