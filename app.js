@@ -131,6 +131,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     authEls.panel.hidden = true; authEls.setupPanel.hidden = true; authEls.plannerApp.hidden = false;
     authEls.signOut.hidden = !currentUser;
     els.financePanel.hidden = sharedMode || !plannerId;
+    document.querySelector("#budget-shortcut").hidden = els.financePanel.hidden;
   }
   function toDatabaseEvent(event) {
     return { id: event.id, planner_id: plannerId, title: event.title, category: event.category,
@@ -479,7 +480,14 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     renderDays();
   }
 
-  const report = Object.fromEntries(["period", "month", "start", "end", "message", "body"].map(name => [name, document.querySelector(`#report-${name}`)]));
+  document.querySelectorAll(".mobile-sections a").forEach(link => {
+    link.addEventListener("click", event => {
+      event.preventDefault();
+      document.querySelector(link.getAttribute("href"))?.scrollIntoView({ block: "start" });
+    });
+  });
+
+  const report = Object.fromEntries(["period", "month", "start", "end", "message", "body", "cards"].map(name => [name, document.querySelector(`#report-${name}`)]));
   report.month.value = financeMonth;
   report.start.value = dateKey(weekStart);
   report.end.value = dateKey(addDays(weekStart, 6));
@@ -499,6 +507,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     }
     if (period === "custom") { start = report.start.value; end = report.end.value; }
     report.body.replaceChildren();
+    report.cards.replaceChildren();
     if ((period === "month" && !report.month.value) || (period === "custom" && (!start || !end || start > end))) {
       report.message.textContent = "Choisis une période valide : la date de début doit précéder ou être égale à la date de fin.";
       return;
@@ -517,6 +526,16 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         const cell = document.createElement("td"); cell.textContent = value; row.append(cell);
       }
       report.body.append(row);
+      const card = document.createElement("article"); card.className = "report-card";
+      const title = document.createElement("h3"); title.textContent = label;
+      const list = document.createElement("dl");
+      const labels = ["Enregistrées", "Annulées", "Accomplies / exécutées", "Taux d’accomplissement"];
+      [...row.querySelectorAll("td")].forEach((cell, index) => {
+        const term = document.createElement("dt"); term.textContent = labels[index];
+        const value = document.createElement("dd"); value.textContent = cell.textContent;
+        list.append(term, value);
+      });
+      card.append(title, list); report.cards.append(card);
     }
   }
 

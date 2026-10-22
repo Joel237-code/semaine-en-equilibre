@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f6f4ec">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=12">
-  <script type="module" src="app.js?v=15"></script>
+  <link rel="stylesheet" href="styles.css?v=13">
+  <script type="module" src="app.js?v=16"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -40,6 +40,7 @@
       </section>
       <section class="setup-panel" id="setup-panel" hidden><p class="eyebrow">COMPTE CONNECTÉ</p><h1>Encore une petite étape.</h1><p id="setup-message">Ce compte n’est pas encore relié au planning partagé.</p><button class="today-button" id="retry-planner" type="button">Réessayer</button></section>
       <div id="planner-app" hidden>
+      <nav class="mobile-sections" aria-label="Accès rapide"><a href="#planning-section">Planning</a><a href="#report-heading">Rapport</a><a id="budget-shortcut" href="#finance-heading">Budget</a></nav>
       <section class="intro">
         <div class="intro-copy">
           <p class="eyebrow">TON ESPACE, TON RYTHME</p>
@@ -53,7 +54,7 @@
         </div>
       </section>
 
-      <section class="planner" aria-label="Agenda de la semaine">
+      <section class="planner" id="planning-section" aria-label="Agenda de la semaine">
         <div class="planner-heading">
           <div>
             <p class="eyebrow">MON PLANNING</p>
@@ -111,6 +112,7 @@
           <thead><tr><th scope="col">Catégorie</th><th scope="col">Enregistrées</th><th scope="col">Annulées</th><th scope="col">Accomplies / exécutées</th><th scope="col">Taux d’accomplissement</th></tr></thead>
           <tbody id="report-body"></tbody>
         </table></div>
+        <div class="report-cards" id="report-cards" aria-label="Bilan général et par catégorie"></div>
       </section>
       <section class="finance-panel" id="finance-panel" aria-labelledby="finance-heading" hidden>
         <header class="finance-heading">
