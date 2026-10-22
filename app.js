@@ -91,6 +91,9 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   let plannerId = null;
   let currentUser = null;
   let financeMonth = dateKey(new Date()).slice(0, 7);
+  let recurringBills = [];
+  let paidBillIds = new Set();
+  let billsReady = false;
   let financeRequest = 0;
   let monthlySalary = null;
   let monthlyExpenses = [];
@@ -210,6 +213,8 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     const { start, end } = monthBounds(requestedMonth);
     monthlySalary = null;
     monthlyExpenses = [];
+    billsReady = false; recurringBills = []; paidBillIds = new Set();
+    renderBills();
     renderFinance();
     els.financeMessage.textContent = "Chargement du suivi financier…";
     els.financeSetup.hidden = true;
@@ -228,6 +233,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       monthlyExpenses = expensesResult.data || [];
       renderFinance();
       els.financeMessage.textContent = "";
+      await loadBills(request, requestedPlanner, requestedMonth);
     } catch (error) {
       if (!isCurrent()) return;
       els.financeMessage.textContent = error.code === "42501"
@@ -236,6 +242,82 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       els.financeSetup.hidden = !["PGRST205", "42P01"].includes(error.code);
     }
   }
+  function billDueDate(month, day) {
+    const [year, number] = month.split("-").map(Number);
+    const lastDay = new Date(year, number, 0).getDate();
+    return `${month}-${String(Math.min(day, lastDay)).padStart(2, "0")}`;
+  }
+  async function loadBills(request, requestedPlanner, requestedMonth) {
+    const { start, end } = monthBounds(requestedMonth);
+    const [bills, paid] = await Promise.all([
+      supabase.from("planner_recurring_bills").select("id,label,amount,due_day,start_month").eq("planner_id", requestedPlanner).eq("active", true).order("due_day").order("label"),
+      supabase.from("planner_expenses").select("recurring_bill_id").eq("planner_id", requestedPlanner).gte("expense_date", start).lt("expense_date", end)
+    ]);
+    if (request !== financeRequest || requestedPlanner !== plannerId || requestedMonth !== financeMonth) return;
+    const error = bills.error || paid.error;
+    billsReady = !error;
+    recurringBills = error ? [] : bills.data || [];
+    paidBillIds = new Set((paid.data || []).map(row => row.recurring_bill_id).filter(Boolean));
+    renderBills();
+    document.querySelector("#bill-setup").hidden = !error || !["42P01", "42703", "PGRST204", "PGRST205"].includes(error.code);
+    if (error) document.querySelector("#bill-status").textContent = errorMessage(error, "Impossible de charger les factures mensuelles. Réessaie en sélectionnant le mois.");
+  }
+  function renderBills() {
+    const suggestions = document.querySelector("#bill-suggestions"), list = document.querySelector("#bill-list");
+    suggestions.replaceChildren(); list.replaceChildren();
+    document.querySelector("#bill-form button").disabled = !billsReady;
+    const today = dateKey(new Date());
+    for (const bill of recurringBills) {
+      const due = billDueDate(financeMonth, bill.due_day);
+      const row = document.createElement("div"); row.className = "bill-row";
+      const label = document.createElement("span"); label.textContent = `${bill.label} · ${moneyFormat.format(Number(bill.amount))} · le ${bill.due_day}`;
+      const stop = document.createElement("button"); stop.type = "button"; stop.className = "cancel-button"; stop.textContent = "Arrêter";
+      stop.setAttribute("aria-label", `Arrêter la facture mensuelle ${bill.label}`);
+      stop.addEventListener("click", () => stopBill(bill, stop));
+      row.append(label, stop); list.append(row);
+      if (bill.start_month > `${financeMonth}-01` || due > today || paidBillIds.has(bill.id)) continue;
+      const suggestion = document.createElement("div"); suggestion.className = "bill-row";
+      const text = document.createElement("span"); text.textContent = `${bill.label} · ${moneyFormat.format(Number(bill.amount))} · échéance le ${due.slice(8)}`;
+      const add = document.createElement("button"); add.type = "button"; add.className = "save-button"; add.textContent = "Ajouter";
+      add.setAttribute("aria-label", `Ajouter la facture ${bill.label} aux dépenses`);
+      add.addEventListener("click", () => addBillExpense(bill, due, add));
+      suggestion.append(text, add); suggestions.append(suggestion);
+    }
+    document.querySelector("#bill-status").textContent = !billsReady ? "Chargement des factures…" : suggestions.children.length ? "À confirmer : ces factures ne sont pas encore dans tes dépenses." : "Aucune facture en attente pour cette période.";
+  }
+  async function changeBill(button, action, success) {
+    const month = financeMonth, planner = plannerId;
+    button.disabled = true;
+    try {
+      const { error } = await action();
+      if (month !== financeMonth || planner !== plannerId) return;
+      if (error && error.code !== "23505") throw error;
+      await loadFinanceData();
+      if (month === financeMonth && planner === plannerId) document.querySelector("#bill-status").textContent = error ? "Cette facture est déjà ajoutée pour ce mois." : success;
+    } catch (error) {
+      if (month === financeMonth && planner === plannerId) document.querySelector("#bill-status").textContent = errorMessage(error, "Impossible d’enregistrer cette facture. Réessaie.");
+    } finally { button.disabled = false; }
+  }
+  async function addBillExpense(bill, due, button) {
+    if (!billsReady || paidBillIds.has(bill.id)) return;
+    await changeBill(button, () => supabase.from("planner_expenses").insert({ planner_id: plannerId, label: bill.label, amount: bill.amount, expense_date: due, recurring_bill_id: bill.id }), "Facture ajoutée aux dépenses.");
+  }
+  async function stopBill(bill, button) {
+    if (!window.confirm(`Arrêter les propositions mensuelles pour « ${bill.label} » ? Les dépenses déjà ajoutées seront conservées.`)) return;
+    await changeBill(button, () => supabase.from("planner_recurring_bills").update({ active: false }).eq("id", bill.id).eq("planner_id", plannerId), "Facture mensuelle arrêtée.");
+  }
+  document.querySelector("#bill-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!billsReady || !plannerId) return;
+    const label = document.querySelector("#bill-label").value.trim();
+    const amount = Number(document.querySelector("#bill-amount").value), due_day = Number(document.querySelector("#bill-day").value);
+    if (!label || label.length > 80 || !Number.isFinite(amount) || amount <= 0 || !Number.isInteger(due_day) || due_day < 1 || due_day > 31) return;
+    await changeBill(event.target.querySelector("button"), () => supabase.from("planner_recurring_bills").insert({ planner_id: plannerId, label, amount, due_day, start_month: `${financeMonth}-01` }), "Facture mensuelle enregistrée.");
+  });
+  // Refresh due proposals after midnight or when returning to an already open app.
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && plannerId && !sharedMode) loadFinanceData(); });
+  window.setInterval(() => { if (!document.hidden && billsReady) renderBills(); }, 60000);
+
   async function saveMonthlySalary(event) {
     event.preventDefault();
     const salary = Number(els.financeSalary.value);

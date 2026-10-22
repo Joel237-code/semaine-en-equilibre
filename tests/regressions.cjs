@@ -15,7 +15,7 @@ test('Only the latest financial request can render, including stale failures', a
     financeRequest: 0, plannerId: 'p', sharedMode: false, financeMonth: '2026-01', monthlySalary: null, monthlyExpenses: [],
     els: { financeMessage: element(), financeSetup: element(), financeEmpty: element(), financeExpenseList: element() },
     monthBounds: month => ({ start: month + '-01', end: month + '-31' }),
-    renderFinance() {},
+    renderFinance() {}, renderBills() {}, loadBills: async () => {},
     supabase: { from() {
       const q = { select(){return q}, eq(){return q}, gte(){return q}, lt(){return q}, order(){return q}, maybeSingle(){return q},
         then(resolve) { return new Promise(r => pending.push(r)).then(resolve); } }; return q;
@@ -50,4 +50,22 @@ test('Cloud save does not cache activities and legacy imports are disabled', () 
   assert.ok(!fn('handleSubmit').includes('localStorage.setItem'));
   assert.match(source,/const localEvents = \[\]/);
   assert.match(source,/events = \[\];\s*monthlySalary = null; monthlyExpenses = \[\]; clearLegacyCache\(\)/);
+});
+
+test('Monthly due dates handle short months and leap years', () => {
+  const context = vm.createContext({}); vm.runInContext(fn('billDueDate'),context);
+  assert.equal(context.billDueDate('2026-02',31),'2026-02-28');
+  assert.equal(context.billDueDate('2028-02',31),'2028-02-29');
+  assert.equal(context.billDueDate('2026-04',31),'2026-04-30');
+  assert.equal(context.billDueDate('2026-10',3),'2026-10-03');
+});
+test('Bill confirmation writes the occurrence only once per action with its reference', async () => {
+  let payload;
+  const context=vm.createContext({billsReady:true,paidBillIds:new Set(),plannerId:'p',
+    changeBill:async(button,action)=>action(),supabase:{from:()=>({insert:async value=>{payload=value; return {error:null}}})}});
+  vm.runInContext(fn('addBillExpense'),context);
+  await context.addBillExpense({id:'b',label:'Electricité',amount:45},'2026-10-03',{});
+  assert.equal(payload.recurring_bill_id,'b'); assert.equal(payload.expense_date,'2026-10-03');
+  payload=null; context.paidBillIds.add('b');
+  await context.addBillExpense({id:'b'},'2026-10-03',{}); assert.equal(payload,null);
 });

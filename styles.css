@@ -305,3 +305,14 @@ footer { display: flex; justify-content: center; align-items: center; gap: 8px; 
   .mobile-sections a { display: flex; align-items: center; justify-content: center; flex: 1; min-height: 44px; padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--green-dark); text-decoration: none; font-size: 14px; font-weight: 700; }
   .mobile-sections a[hidden] { display: none; }
 }
+.bill-suggestions { margin: 16px 0; padding: 14px; border-radius: 12px; background: var(--green-soft); }
+.bill-suggestions h4 { margin: 0 0 8px; }
+.bill-suggestions p, .bill-settings p { font-size: 14px; line-height: 1.6; }
+.bill-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.bill-row span { min-width: 0; overflow-wrap: anywhere; font-size: 14px; line-height: 1.5; }
+.bill-row button { flex-shrink: 0; }
+.bill-settings { margin: 20px 0; padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
+.bill-settings summary { min-height: 44px; cursor: pointer; font-weight: 700; }
+.bill-settings .save-button { margin-top: 16px; }
+button:disabled { opacity: .55; cursor: not-allowed; }
+@media(max-width:620px) { .bill-row { align-items: stretch; flex-direction: column; } .bill-row button { width: 100%; } .bill-settings { padding: 14px; } }
