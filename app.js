@@ -35,9 +35,6 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     financeEmpty: document.querySelector("#expense-empty"),
     financeMessage: document.querySelector("#finance-message"),
     financeSetup: document.querySelector("#finance-setup"),
-    shareOutput: document.querySelector("#share-output"),
-    shareLink: document.querySelector("#share-link"),
-    shareMessage: document.querySelector("#share-message"),
     shareNotice: document.querySelector("#share-notice"),
     storageLabel: document.querySelector("#storage-label"),
     previousWeek: document.querySelector("#previous-week"),
@@ -426,63 +423,10 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     try {
       localStorage.setItem(sharedMode ? sharedDraftKey : STORAGE_KEY, JSON.stringify(events));
       if (sharedMode) {
-        els.shareOutput.hidden = true;
-        els.shareNotice.textContent = "Tes changements restent dans cette copie sur cet appareil. Crée un nouveau lien pour les transmettre.";
+        els.shareNotice.textContent = "Tes changements restent dans cette copie sur cet appareil et ne modifient pas le planning partagé.";
       }
     } catch {
       els.error.textContent = "Le navigateur n’a pas pu enregistrer les changements.";
-    }
-  }
-
-  function buildShareUrl() {
-    const weekEnd = addDays(weekStart, 6);
-    const weekEvents = events.filter((event) => {
-      const date = parseDate(event.date);
-      return date >= weekStart && date <= weekEnd;
-    });
-    const payload = {
-      version: 1,
-      week: dateKey(weekStart),
-      events: weekEvents
-    };
-    const bytes = new TextEncoder().encode(JSON.stringify(payload));
-    let binary = "";
-    for (let offset = 0; offset < bytes.length; offset += 0x8000) {
-      binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
-    }
-    const encoded = btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-    return `${location.origin}${location.pathname}#share=${encoded}`;
-  }
-
-  async function shareWeek() {
-    const url = buildShareUrl();
-    if (url.length > 8000) {
-      els.shareMessage.textContent = "Le lien est trop long. Retire les notes et lieux facultatifs avant de partager.";
-      els.shareOutput.hidden = false;
-      els.shareLink.value = "";
-      return;
-    }
-    els.shareLink.value = url;
-    els.shareOutput.hidden = false;
-    try {
-      await navigator.clipboard.writeText(url);
-      els.shareMessage.textContent = "Lien copié. Envoie-le en privé à la personne avec qui tu partages cette semaine.";
-    } catch {
-      els.shareMessage.textContent = "Copie ce lien et envoie-le en privé. Toute personne qui le reçoit peut voir la semaine.";
-      els.shareLink.focus();
-      els.shareLink.select();
-    }
-  }
-
-  async function copyShareLink() {
-    if (!els.shareLink.value) return;
-    try {
-      await navigator.clipboard.writeText(els.shareLink.value);
-      els.shareMessage.textContent = "Lien copié. Envoie-le en privé.";
-    } catch {
-      els.shareLink.focus();
-      els.shareLink.select();
-      els.shareMessage.textContent = "Sélectionne le lien, puis copie-le.";
     }
   }
 
@@ -768,8 +712,6 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     render();
   });
   els.leaveShared.addEventListener("click", leaveSharedCopy);
-  document.querySelector("#share-week").addEventListener("click", shareWeek);
-  document.querySelector("#copy-share-link").addEventListener("click", copyShareLink);
   document.querySelector("#open-form").addEventListener("click", openNewForm);
   document.querySelector("#close-form").addEventListener("click", closeForm);
   document.querySelector("#cancel-form").addEventListener("click", closeForm);

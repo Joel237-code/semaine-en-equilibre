@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=12">
-  <script type="module" src="app.js?v=14"></script>
+  <script type="module" src="app.js?v=15"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -67,7 +67,7 @@
           </div>
         </div>
 
-        <p class="share-notice" id="share-notice" hidden>Tu consultes une copie d’une seule semaine. Tes modifications restent sur cet appareil; partage un nouveau lien pour les transmettre.</p>
+        <p class="share-notice" id="share-notice" hidden>Tu consultes une copie d’une seule semaine. Tes modifications restent sur cet appareil et ne modifient pas le planning partagé.</p>
         <div class="summary-row" aria-label="Résumé de la semaine">
           <div class="summary-card"><span class="summary-icon school-icon">▤</span><span><strong id="school-count">0</strong><small>cours prévus</small></span></div>
           <div class="summary-card"><span class="summary-icon other-icon">✦</span><span><strong id="other-count">0</strong><small>autres activités</small></span></div>
@@ -88,19 +88,11 @@
             <button class="filter-chip" type="button" data-filter="other"><span class="chip-dot other-dot"></span>Autre activité</button>
           </div>
           <div class="toolbar-actions">
-            <button class="share-button" id="share-week" type="button">Partager cette semaine</button>
             <button class="add-button" id="open-form" type="button"><span aria-hidden="true">＋</span> Ajouter une activité</button>
           </div>
         </div>
 
         <div class="cloud-migration" id="migration-panel" hidden><span>Des activités sont enregistrées sur cet appareil. Veux-tu les importer dans le planning partagé&nbsp;?</span><button class="copy-button" id="import-local" type="button">Importer mes activités</button></div>
-        <div class="share-output" id="share-output" hidden>
-          <strong id="share-message">Lien de la semaine</strong>
-          <div class="share-link-row">
-            <input id="share-link" class="text-input" type="text" readonly aria-label="Lien à partager">
-            <button class="copy-button" id="copy-share-link" type="button">Copier</button>
-          </div>
-        </div>
         <div class="week-grid" id="week-grid" aria-live="polite"></div>
         <p class="privacy-note"><span aria-hidden="true">◈</span> Les activités sont synchronisées dans le cloud pour les comptes autorisés. Un lien de copie reste visible par toute personne qui le reçoit.</p>
       </section>
