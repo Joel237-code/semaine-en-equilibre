@@ -377,24 +377,17 @@ input[type="month"]::-webkit-date-and-time-value { min-width: 0; text-align: lef
 #cancel-expense-edit { margin-top: 12px; }
 @media(max-width:620px) { .expense-row { grid-template-columns: minmax(0,1fr) auto; } .expense-actions { grid-column: 1 / -1; justify-content: flex-end; } .expense-remove { grid-column: auto; grid-row: auto; } .carry-controls > button { white-space: normal; min-height: 48px; } }
 
-.activity-search { margin: 16px 0; }
-#search-message, .sync-status { color: #53675a; font-size: 12px; line-height: 1.5; }
-#search-results { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
-#search-results[hidden], .week-grid[hidden] { display: none; }
-.search-result { min-width: 0; }
-.search-result > p { font-size: 13px; color: var(--muted); }
-.search-result .event-card { min-height: 60px; }
 .overlap-warning { background: #fff1d6; color: #79531d; padding: 12px; border-radius: 10px; font-size: 14px; line-height: 1.5; }
 .overlap-warning[hidden] { display: none; }
 .day-column.drop-target { outline: 3px solid var(--green); outline-offset: 2px; }
 #duplicate-event { white-space: normal; }
-@media(max-width:620px) { #search-results { grid-template-columns: repeat(2,minmax(0,1fr)); } .dialog-actions button { min-width: 40%; } }
+@media(max-width:620px) { .dialog-actions button { min-width: 40%; } }
 html[data-theme="dark"] { color-scheme: dark; --ink: #e4eee6; --muted: #abbcaf; --paper: #15221c; --card: #203128; --line: #405447; --green: #497d59; --green-dark: #b1dab4; --green-soft: #2b4433; }
 html[data-theme="dark"] body { background: var(--paper); color: var(--ink); }
 html[data-theme="dark"] :is(.planner,.finance-panel,.activity-report,.auth-panel,.setup-panel,.finance-form,.day-column,.summary-card,.text-input,.icon-button,.today-button,.copy-button,.cancel-button,.expense-row,.expense-edit,.finance-summary-card) { background: var(--card); color: var(--ink); border-color: var(--line); }
 html[data-theme="dark"] :is(.day-column.is-today,.report-card:first-child,.finance-balance,.summary-icon,.filter-chip.is-active,.bill-suggestions,.cancelled-toggle,.share-notice) { background: var(--green-soft); color: var(--ink); border-color: var(--line); }
 html[data-theme="dark"] :is(h1,h2,h3,.day-date,.summary-card strong,.event-title,.finance-summary-card strong,.report-card .report-rate,.completed-toggle strong) { color: var(--ink); }
-html[data-theme="dark"] :is(.intro-text,.summary-card small,.field-label,.day-name,.empty-day,.privacy-note,.filter-chip,.optional,.report-card dt,.activity-report .optional,#report-message,.finance-message,.finance-empty,.expense-details small,#finance-options-message,#planning-message,#search-message,.sync-status,.cancelled-toggle small,.cancelled-toggle strong) { color: var(--muted); }
+html[data-theme="dark"] :is(.intro-text,.summary-card small,.field-label,.day-name,.empty-day,.privacy-note,.filter-chip,.optional,.report-card dt,.activity-report .optional,#report-message,.finance-message,.finance-empty,.expense-details small,#finance-options-message,#planning-message,.sync-status,.cancelled-toggle small,.cancelled-toggle strong) { color: var(--muted); }
 html[data-theme="dark"] .category-school { --event-tint: #28364b; --event-color: #a4bced; }
 html[data-theme="dark"] .category-work { --event-tint: #49302d; --event-color: #e6aaa3; }
 html[data-theme="dark"] .category-spiritual { --event-tint: #3b3048; --event-color: #c8b0e1; }
@@ -437,3 +430,10 @@ html[data-theme="dark"] .add-button:hover, html[data-theme="dark"] .save-button:
   #planning-section { margin-top: 20px; }
   .planner .agenda-toolbar { justify-content: flex-end; }
 }
+
+/* Reserve the light-mode label width so toggling themes never reflows the header. */
+#theme-toggle { white-space: nowrap; min-inline-size: max-content; }
+#theme-toggle::after { content: "Mode sombre"; display: block; height: 0; visibility: hidden; overflow: hidden; }
+
+.sync-status { color: #53675a; font-size: 12px; line-height: 1.5; }
+html[data-theme="dark"] .sync-status { color: var(--muted); }

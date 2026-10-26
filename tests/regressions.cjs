@@ -101,10 +101,6 @@ test('Overlap detection excludes the same event, adjacent times and cancelled ac
   assert.equal(context.findOverlaps(record,others).length,1);
   assert.equal(context.findOverlaps({...record,cancelled:true},others).length,0);
 });
-test('Search ignores accents, case and surrounding whitespace', () => {
-  const context=vm.createContext({});vm.runInContext(fn('normalizeSearch'),context);
-  assert.equal(context.normalizeSearch('  ÉCOLE  '),'ecole');
-});
 test('Week-copy identifiers are stable and scoped to planner and target date', async () => {
   const context=vm.createContext({crypto:require('node:crypto').webcrypto,TextEncoder});vm.runInContext(fn('copyActivityId'),context);
   const id=await context.copyActivityId('source','2026-10-26','p');

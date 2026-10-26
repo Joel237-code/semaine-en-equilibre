@@ -43,9 +43,7 @@ try:
   assert page.locator('html').get_attribute('data-theme')=='dark'
   page.reload(wait_until='networkidle')
   assert page.locator('html').get_attribute('data-theme')=='dark'
-  page.locator('#activity-search').fill('ecole')
-  page.wait_for_function("document.querySelectorAll('#search-results .event-card').length===2")
-  page.locator('#activity-search').fill('')
+  assert page.locator('#activity-search, #search-results').count()==0
   page.locator('#week-grid .event-card').first.click()
   page.locator('#duplicate-event').click()
   next_date=page.evaluate("(()=>{const d=new Date();d.setDate(d.getDate()+1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})()")
@@ -68,6 +66,6 @@ try:
   assert page.locator('#auth-panel').is_visible()
   assert page.locator('#week-grid .event-card').count()==0
   assert not errors,errors
-  print('PASS: dark mode persistence, accent-insensitive all-week search, duplicate, overlap warning, drag move, remote insert/delete refresh')
+  print('PASS: dark mode persistence, duplicate, overlap warning, drag move, remote insert/delete refresh')
   b.close()
 finally: server.shutdown()

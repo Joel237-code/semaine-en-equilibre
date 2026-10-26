@@ -81,7 +81,6 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   let events = sharedSnapshot ? loadEvents(sharedDraftKey, sharedSnapshot.events) : [...localEvents];
   let weekStart = sharedSnapshot ? parseDate(sharedSnapshot.week) : mondayOf(new Date());
   let activeFilter = "all";
-  let searchLimit = 50;
   let draggedActivityId = null;
   let movingActivity = false;
   let realtimeChannel = null;
@@ -514,7 +513,6 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       if (event === "SIGNED_OUT") {
         ++financeRequest; ++cloudRequest; stopRealtime(); currentUser = null; plannerId = null; events = [];
         resetExpenseForm(); els.financeSalaryForm.reset(); document.querySelector("#bill-form").reset();
-        document.querySelector("#activity-search").value = "";
         monthlySalary = null; monthlyExpenses = []; monthlyCarry = 0; financeOptionsReady = false; editingExpenseId = null;
         recurringBills = []; paidBillIds = new Set(); billsReady = false;
         renderFinance(); renderBills(); render(); clearLegacyCache(); showAuth();
@@ -669,7 +667,6 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     document.querySelector("#copy-previous-week").hidden = sharedMode;
     renderReport();
     renderDays();
-    renderSearch();
   }
 
   const mobileLayout = window.matchMedia("(max-width: 900px)");
@@ -684,7 +681,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         const selected = chip.dataset.filter === "all";
         chip.classList.toggle("is-active", selected); chip.setAttribute("aria-pressed", String(selected));
       });
-      renderDays(); renderSearch();
+      renderDays();
     }
     if (!["planning", "report", "budget"].includes(page)) page = "planning";
     if (page === "budget" && (sharedMode || els.financePanel.hidden)) page = "planning";
@@ -907,24 +904,6 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.cancelled.disabled = els.completed.checked;
   }
 
-  function normalizeSearch(value) { return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("fr").trim(); }
-  function renderSearch() {
-    const query = normalizeSearch(document.querySelector("#activity-search").value);
-    const results = document.querySelector("#search-results"), more = document.querySelector("#search-more");
-    results.replaceChildren(); results.hidden = !query; els.grid.hidden = Boolean(query); more.hidden = true;
-    const message = document.querySelector("#search-message"); message.textContent = "";
-    if (!query) return;
-    const matches = events.filter(event => normalizeSearch(event.title).includes(query) && (activeFilter === "all" || event.category === activeFilter)).sort((a,b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
-    message.textContent = `${matches.length} résultat(s) dans ${sharedMode ? "cette copie" : "le planning"}.`;
-    for (const event of matches.slice(0, searchLimit)) {
-      const item = document.createElement("div"); item.className = "search-result";
-      const date = document.createElement("p"); date.textContent = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" }).format(parseDate(event.date));
-      item.append(date, makeEventCard(event)); results.append(item);
-    }
-    more.hidden = matches.length <= searchLimit;
-  }
-  document.querySelector("#activity-search").addEventListener("input", () => { searchLimit = 50; renderSearch(); });
-  document.querySelector("#search-more").addEventListener("click", () => { searchLimit += 50; renderSearch(); });
   function findOverlaps(record, records) {
     if (record.cancelled || !record.date || !record.start || !record.end || record.end <= record.start) return [];
     return records.filter(other => other.id !== record.id && !other.cancelled && other.date === record.date && record.start < other.end && record.end > other.start);
@@ -1168,7 +1147,6 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         chip.setAttribute("aria-pressed", String(selected));
       });
       renderDays();
-      renderSearch();
     });
   });
 

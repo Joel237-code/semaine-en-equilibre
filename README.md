@@ -54,7 +54,7 @@ Les dépenses sont modifiables depuis leur ligne. Les catégories alimentent un 
 ## Confort et synchronisation
 
 - Le bouton de thème alterne clair/sombre et mémorise uniquement cette préférence sur l’appareil. Le thème système est utilisé à la première ouverture.
-- La recherche par nom couvre toutes les semaines chargées, ignore les accents et respecte le filtre de catégorie. Les résultats affichent leur date.
+- La recherche d’activité a été retirée pour garder le planning simple.
 - Dans le formulaire d’une activité, « Dupliquer » prépare une nouvelle activité sans l’enregistrer immédiatement et remet les statuts à zéro.
 - Sur ordinateur, glisser une activité vers un autre jour la déplace. Sur téléphone et au clavier, ouvrir l’activité et modifier sa date offre la même possibilité.
 - Un chevauchement produit un avertissement et demande confirmation à l’enregistrement/déplacement. Les activités annulées et les horaires simplement adjacents ne sont pas des conflits.

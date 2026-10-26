@@ -23,6 +23,16 @@ try:
   page.locator('.activity-report').wait_for()
   assert not page.locator('.planner').is_visible()
   assert not page.locator('.finance-panel').is_visible()
+  assert page.locator('#activity-search').count()==0
+  for width in [320,375,390,430]:
+   page.set_viewport_size({'width':width,'height':844})
+   if page.locator('html').get_attribute('data-theme')=='dark':page.locator('#theme-toggle').click()
+   light=page.locator('.account-controls').evaluate("(e)=>[...e.children].map(c=>{const r=c.getBoundingClientRect();return [r.x,r.y,r.width,r.height]})")
+   page.locator('#theme-toggle').click()
+   dark=page.locator('.account-controls').evaluate("(e)=>[...e.children].map(c=>{const r=c.getBoundingClientRect();return [r.x,r.y,r.width,r.height]})")
+   assert light==dark, (width,light,dark)
+   assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+  page.set_viewport_size({'width':390,'height':844})
   assert page.locator('[data-page=report]').get_attribute('aria-current')=='page'
   page.locator('[data-page=budget]').click()
   assert page.locator('.finance-panel').is_visible()
