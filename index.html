@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script>try { document.documentElement.dataset.theme = localStorage.getItem("semaine.theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); } catch { document.documentElement.dataset.theme = "light"; }</script>
   <meta name="theme-color" content="#f6f4ec">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,8 +16,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20">
-  <script type="module" src="app.js?v=22"></script>
+  <link rel="stylesheet" href="styles.css?v=21">
+  <script type="module" src="app.js?v=23"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -25,7 +26,7 @@
         <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
         <span>Semaine <em>pour Guyane</em></span>
       </a>
-      <div class="account-controls"><span class="local-badge"><span class="status-dot"></span><span id="storage-label">Connexion requise</span></span><button class="account-button" id="sign-out" type="button" hidden>Se déconnecter</button></div>
+      <div class="account-controls"><button class="account-button" id="theme-toggle" type="button" aria-pressed="false">Mode sombre</button><span class="local-badge"><span class="status-dot"></span><span id="storage-label">Connexion requise</span></span><button class="account-button" id="sign-out" type="button" hidden>Se déconnecter</button></div>
     </header>
 
     <main>
@@ -100,6 +101,9 @@
         </div>
 
         <div class="cloud-migration" id="migration-panel" hidden><span>Des activités sont enregistrées sur cet appareil. Veux-tu les importer dans le planning partagé&nbsp;?</span><button class="copy-button" id="import-local" type="button">Importer mes activités</button></div>
+        <div class="activity-search"><label class="field-label" for="activity-search">Rechercher une activité</label><input class="text-input" id="activity-search" type="search" placeholder="Nom de l’activité, toutes les semaines" autocomplete="off"><p id="search-message" role="status" aria-live="polite"></p></div>
+        <div id="search-results" hidden></div><button class="copy-button" id="search-more" type="button" hidden>Voir plus de résultats</button>
+        <p class="sync-status" id="sync-status" role="status" aria-live="polite"></p>
         <p id="planning-message" role="status" aria-live="polite"></p>
         <div class="week-grid" id="week-grid" aria-live="polite"></div>
         <p class="privacy-note"><span aria-hidden="true">◈</span> Les activités sont synchronisées dans le cloud pour les comptes autorisés. Un lien de copie reste visible par toute personne qui le reçoit.</p>
@@ -202,11 +206,13 @@
       <input class="text-input" id="event-location" name="location" maxlength="100" placeholder="Ex. Bibliothèque">
       <label class="field-label" for="event-note">Note <span class="optional">(facultatif)</span></label>
       <textarea class="text-input note-input" id="event-note" name="note" maxlength="240" rows="2" placeholder="Une petite précision…"></textarea>
+      <p class="overlap-warning" id="activity-overlap" role="status" aria-live="polite" hidden></p>
       <p class="optional">La fin se règle à deux heures après le début, au plus tard à 23 h 59. Tu peux l’ajuster.</p>
       <label class="cancelled-toggle" id="cancelled-option" hidden><input id="event-cancelled" type="checkbox"><span><strong>Activité annulée</strong><small>Elle restera visible en gris et barrée.</small></span></label>
       <label class="cancelled-toggle completed-toggle" id="completed-option" hidden><input id="event-completed" type="checkbox"><span><strong>Activité accomplie</strong><small>Une coche verte apparaîtra dans le calendrier.</small></span></label>
       <p class="form-error" id="form-error" role="alert"></p>
       <div class="dialog-actions">
+        <button class="copy-button" id="duplicate-event" type="button" hidden>Dupliquer</button>
         <button class="delete-button" id="delete-event" type="button" hidden>Supprimer</button>
         <span class="action-spacer"></span>
         <button class="cancel-button" id="cancel-form" type="button">Annuler</button>

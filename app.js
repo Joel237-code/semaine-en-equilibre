@@ -88,8 +88,16 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   let events = sharedSnapshot ? loadEvents(sharedDraftKey, sharedSnapshot.events) : [...localEvents];
   let weekStart = sharedSnapshot ? parseDate(sharedSnapshot.week) : mondayOf(new Date());
   let activeFilter = "all";
+  let searchLimit = 50;
+  let draggedActivityId = null;
+  let movingActivity = false;
+  let realtimeChannel = null;
+  let realtimeTimer = null;
+  let realtimePending = new Set();
   let weeklyGoals = {};
   let goalsReady = false;
+  let cloudRequest = 0;
+  let goalsRequest = 0;
   let plannerId = null;
   let currentUser = null;
   let financeMonth = dateKey(new Date()).slice(0, 7);
@@ -155,6 +163,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       cancelled: row.cancelled === true, completed: row.completed === true };
   }
   async function loadCloudEvents() {
+    const request = ++cloudRequest;
     const requestedPlanner = plannerId, requestedUser = currentUser?.id;
     if (!requestedPlanner) return;
     const rows = [];
@@ -165,11 +174,11 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         .eq("planner_id", requestedPlanner).order("activity_date").order("start_time").order("id")
         .range(offset, offset + pageSize - 1);
       if (error) throw error;
-      if (plannerId !== requestedPlanner || currentUser?.id !== requestedUser) return;
+      if (request !== cloudRequest || plannerId !== requestedPlanner || currentUser?.id !== requestedUser) return;
       rows.push(...(data || []));
       if (!data || data.length < pageSize) break;
     }
-    if (plannerId !== requestedPlanner || currentUser?.id !== requestedUser) return;
+    if (request !== cloudRequest || plannerId !== requestedPlanner || currentUser?.id !== requestedUser) return;
     events = rows.map(fromDatabaseEvent);
     authEls.migrationPanel.hidden = !(events.length === 0 && localEvents.length > 0);
     render();
@@ -184,7 +193,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   }
   function renderFinance() {
     const expensesTotal = monthlyExpenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
-    els.financeSalary.value = monthlySalary === null ? "" : Number(monthlySalary).toFixed(2);
+    if (!els.financeSalaryForm.contains(document.activeElement)) els.financeSalary.value = monthlySalary === null ? "" : Number(monthlySalary).toFixed(2);
     els.financeSalaryTotal.textContent = monthlySalary === null ? "À renseigner" : moneyFormat.format(Number(monthlySalary));
     els.financeExpenseTotal.textContent = moneyFormat.format(expensesTotal);
     els.financeRemainder.textContent = monthlySalary === null ? "—" : moneyFormat.format(Number(monthlySalary) + monthlyCarry - expensesTotal);
@@ -499,6 +508,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     if (!memberships?.length) { plannerId = null; showSetup("Ce compte n’est pas encore relié au planning. Une étape de configuration dans Supabase reste à faire."); return; }
     plannerId = memberships[0].planner_id;
     showPlanner();
+    startRealtime();
     try { await loadCloudEvents(); await Promise.all([loadFinanceData(), loadGoals()]); }
     catch (error) {
       authEls.setupMessage.textContent = errorMessage(error, "Impossible de charger les activités.");
@@ -510,8 +520,13 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     const { data, error } = await supabase.auth.getSession();
     supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
-        ++financeRequest; currentUser = null; plannerId = null; events = [];
-        monthlySalary = null; monthlyExpenses = []; monthlyCarry = 0; financeOptionsReady = false; editingExpenseId = null; weeklyGoals = {}; goalsReady = false; clearLegacyCache(); showAuth();
+        ++financeRequest; ++cloudRequest; ++goalsRequest; stopRealtime(); currentUser = null; plannerId = null; events = [];
+        resetExpenseForm(); els.financeSalaryForm.reset(); document.querySelector("#bill-form").reset();
+        document.querySelector("#activity-search").value = "";
+        monthlySalary = null; monthlyExpenses = []; monthlyCarry = 0; financeOptionsReady = false; editingExpenseId = null; weeklyGoals = {}; goalsReady = false;
+        recurringBills = []; paidBillIds = new Set(); billsReady = false;
+        document.querySelector("#goals-form").reset(); document.querySelector("#goals-form button").disabled = true;
+        renderFinance(); renderBills(); render(); clearLegacyCache(); showAuth();
       }
       else if (session?.user && event !== "INITIAL_SESSION") window.setTimeout(() => handleAuthenticated(session.user), 0);
     });
@@ -665,6 +680,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     renderSummary();
     renderReport();
     renderDays();
+    renderSearch();
   }
 
   document.querySelectorAll(".mobile-sections a").forEach(link => {
@@ -791,15 +807,15 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     label.append(input); goalsInputs.append(label);
   }
   async function loadGoals() {
-    const planner = plannerId;
+    const planner = plannerId, request = ++goalsRequest;
     if (!planner || sharedMode) return;
     const { data, error } = await supabase.from("planner_weekly_goals").select("category,target").eq("planner_id", planner);
-    if (planner !== plannerId) return;
+    if (request !== goalsRequest || planner !== plannerId) return;
     goalsReady = !error;
     weeklyGoals = error ? {} : Object.fromEntries((data || []).map(row => [row.category, row.target]));
     document.querySelector("#goals-form button").disabled = !goalsReady;
     document.querySelector("#goals-message").textContent = error ? "Les objectifs ne sont pas encore disponibles. Vérifie la configuration Supabase." : "";
-    for (const input of goalsInputs.querySelectorAll("input")) input.value = weeklyGoals[input.name] || 0;
+    if (!document.querySelector("#goals-form").contains(document.activeElement)) for (const input of goalsInputs.querySelectorAll("input")) input.value = weeklyGoals[input.name] || 0;
     renderSummary();
   }
   document.querySelector("#goals-form").addEventListener("submit", async event => {
@@ -820,6 +836,9 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   function makeEventCard(event) {
     const card = document.createElement("button");
     card.type = "button";
+    card.draggable = true;
+    card.addEventListener("dragstart", drag => { draggedActivityId = event.id; drag.dataTransfer.setData("text/plain", event.id); drag.dataTransfer.effectAllowed = "move"; });
+    card.addEventListener("dragend", () => { draggedActivityId = null; document.querySelectorAll(".drop-target").forEach(day => day.classList.remove("drop-target")); });
     card.className = `event-card category-${categories[event.category].className}${event.cancelled ? " is-cancelled" : event.completed ? " is-completed" : ""}`;
     card.setAttribute("aria-label", `${categories[event.category].label}, ${event.title}, ${event.start} à ${event.end}${event.cancelled ? ", activité annulée" : event.completed ? ", activité accomplie" : ""}. Modifier`);
     card.addEventListener("click", () => openEditForm(event));
@@ -884,6 +903,9 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         list.append(empty);
       }
 
+      column.addEventListener("dragover", event => { if (draggedActivityId) { event.preventDefault(); event.dataTransfer.dropEffect = "move"; column.classList.add("drop-target"); } });
+      column.addEventListener("dragleave", event => { if (!column.contains(event.relatedTarget)) column.classList.remove("drop-target"); });
+      column.addEventListener("drop", event => { event.preventDefault(); column.classList.remove("drop-target"); const id = draggedActivityId; draggedActivityId = null; if (id) moveActivity(id, key); });
       column.append(heading, list);
       els.grid.append(column);
     }
@@ -912,6 +934,115 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.cancelled.disabled = els.completed.checked;
   }
 
+  function normalizeSearch(value) { return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("fr").trim(); }
+  function renderSearch() {
+    const query = normalizeSearch(document.querySelector("#activity-search").value);
+    const results = document.querySelector("#search-results"), more = document.querySelector("#search-more");
+    results.replaceChildren(); results.hidden = !query; els.grid.hidden = Boolean(query); more.hidden = true;
+    const message = document.querySelector("#search-message"); message.textContent = "";
+    if (!query) return;
+    const matches = events.filter(event => normalizeSearch(event.title).includes(query) && (activeFilter === "all" || event.category === activeFilter)).sort((a,b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+    message.textContent = `${matches.length} résultat(s) dans ${sharedMode ? "cette copie" : "le planning"}.`;
+    for (const event of matches.slice(0, searchLimit)) {
+      const item = document.createElement("div"); item.className = "search-result";
+      const date = document.createElement("p"); date.textContent = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" }).format(parseDate(event.date));
+      item.append(date, makeEventCard(event)); results.append(item);
+    }
+    more.hidden = matches.length <= searchLimit;
+  }
+  document.querySelector("#activity-search").addEventListener("input", () => { searchLimit = 50; renderSearch(); });
+  document.querySelector("#search-more").addEventListener("click", () => { searchLimit += 50; renderSearch(); });
+  function findOverlaps(record, records) {
+    if (record.cancelled || !record.date || !record.start || !record.end || record.end <= record.start) return [];
+    return records.filter(other => other.id !== record.id && !other.cancelled && other.date === record.date && record.start < other.end && record.end > other.start);
+  }
+  function showOverlapWarning() {
+    const conflicts = findOverlaps({ id: els.eventId.value, date: els.date.value, start: els.start.value, end: els.end.value, cancelled: els.cancelled.checked }, events);
+    const warning = document.querySelector("#activity-overlap"); warning.hidden = !conflicts.length;
+    warning.textContent = conflicts.length ? `Chevauchement avec : ${conflicts.map(event => event.title).join(", ")}. Tu peux ajuster les horaires ou confirmer à l’enregistrement.` : "";
+  }
+  for (const field of [els.date, els.end, els.cancelled]) field.addEventListener("input", showOverlapWarning);
+  els.completed.addEventListener("change", showOverlapWarning);
+  document.querySelector("#duplicate-event").addEventListener("click", () => {
+    els.eventId.value = ""; els.cancelled.checked = false; els.completed.checked = false;
+    els.cancelledOption.hidden = true; els.completedOption.hidden = true; els.delete.hidden = true;
+    document.querySelector("#duplicate-event").hidden = true;
+    els.formTitle.textContent = "Dupliquer l’activité"; syncActivityStatusControls(); showOverlapWarning(); els.date.focus();
+  });
+  async function moveActivity(id, date) {
+    if (movingActivity) return;
+    const source = events.find(event => event.id === id); if (!source || source.date === date) return;
+    const record = { ...source, date };
+    if (findOverlaps(record, events).length && !window.confirm("Ce déplacement crée un chevauchement. Continuer ?")) return;
+    const planner = plannerId; movingActivity = true;
+    try {
+      if (!sharedMode) {
+        if (!planner) return;
+        const { error } = await supabase.from("activities").upsert(toDatabaseEvent(record)); if (error) throw error;
+        if (planner !== plannerId) return;
+      }
+      events = events.map(event => event.id === id ? record : event);
+      if (sharedMode) saveEvents(); render();
+      document.querySelector("#planning-message").textContent = "Activité déplacée. Tu peux aussi modifier sa date depuis le formulaire.";
+    } catch (error) { if (planner === plannerId) document.querySelector("#planning-message").textContent = errorMessage(error, "Impossible de déplacer l’activité."); }
+    finally { movingActivity = false; }
+  }
+  function stopRealtime() {
+    if (realtimeTimer) window.clearTimeout(realtimeTimer);
+    realtimeTimer = null; realtimePending.clear();
+    if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+    realtimeChannel = null;
+  }
+  function startRealtime() {
+    stopRealtime(); if (!plannerId || sharedMode || typeof supabase.channel !== "function") return;
+    const planner = plannerId, user = currentUser?.id;
+    const status = document.querySelector("#sync-status"); status.textContent = "Connexion à la synchronisation…";
+    function queue(table) {
+      if (planner !== plannerId || user !== currentUser?.id) return;
+      realtimePending.add(table);
+      if (realtimeTimer) window.clearTimeout(realtimeTimer);
+      realtimeTimer = window.setTimeout(flush, 400);
+    }
+    async function flush() {
+      realtimeTimer = null;
+      if (planner !== plannerId || user !== currentUser?.id) return;
+      // Keep in-progress financial and goal forms intact while another device writes.
+      const active = document.activeElement;
+      if (active?.closest("#salary-form,#expense-form,#bill-form,#goals-form")) { realtimeTimer = window.setTimeout(flush, 1500); return; }
+      const tables = new Set(realtimePending); realtimePending.clear();
+      try {
+        const tasks = [];
+        if (tables.has("activities")) tasks.push(loadCloudEvents());
+        if (tables.has("planner_weekly_goals")) tasks.push(loadGoals());
+        if (["planner_expenses", "planner_monthly_budgets", "planner_recurring_bills"].some(table => tables.has(table))) tasks.push(loadFinanceData());
+        await Promise.all(tasks);
+      } catch { status.textContent = "Mise à jour impossible. Recharge pour réessayer."; }
+    }
+    realtimeChannel = supabase.channel(`planning-${planner}-${user}`);
+    for (const table of ["activities", "planner_weekly_goals", "planner_expenses", "planner_monthly_budgets", "planner_recurring_bills"]) {
+      for (const event of ["INSERT", "UPDATE"]) realtimeChannel.on("postgres_changes", { event, schema: "public", table, filter: `planner_id=eq.${planner}` }, () => queue(table));
+      // Supabase does not support row filters for DELETE. Refetch only our current planner.
+      realtimeChannel.on("postgres_changes", { event: "DELETE", schema: "public", table }, () => queue(table));
+    }
+    realtimeChannel.subscribe(state => {
+      if (planner !== plannerId || user !== currentUser?.id) return;
+      if (state === "SUBSCRIBED") { status.textContent = "Synchronisation en direct active."; for (const table of ["activities", "planner_weekly_goals", "planner_expenses"]) queue(table); }
+      else if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(state)) status.textContent = "Synchronisation interrompue. Recharge pour réessayer.";
+    });
+  }
+  const themeToggle = document.querySelector("#theme-toggle");
+  function renderThemeToggle() {
+    const dark = document.documentElement.dataset.theme === "dark";
+    themeToggle.textContent = dark ? "Mode clair" : "Mode sombre"; themeToggle.setAttribute("aria-pressed", String(dark));
+    document.querySelector('meta[name="theme-color"]').content = dark ? "#15221c" : "#f6f4ec";
+  }
+  themeToggle.addEventListener("click", () => {
+    document.documentElement.dataset.theme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    try { localStorage.setItem("semaine.theme", document.documentElement.dataset.theme); } catch { /* Optional preference. */ }
+    renderThemeToggle();
+  });
+  renderThemeToggle();
+
   function timeAfterStart(start, minutes) {
     if (!/^\d{2}:\d{2}$/.test(start)) return "";
     const [hours, mins] = start.split(":").map(Number);
@@ -925,12 +1056,15 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   function updateEndFromStart() {
     updateEndMinimum();
     els.end.value = timeAfterStart(els.start.value, 120);
+    showOverlapWarning();
   }
   els.start.addEventListener("input", updateEndFromStart);
   els.start.addEventListener("change", updateEndFromStart);
 
   function resetForm() {
     els.form.reset();
+    document.querySelector("#duplicate-event").hidden = true;
+    document.querySelector("#activity-overlap").hidden = true;
     els.eventId.value = "";
     els.start.value = "09:00";
     els.end.value = "11:00";
@@ -971,6 +1105,8 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     syncActivityStatusControls();
     els.delete.hidden = false;
     els.formTitle.textContent = "Modifier l’activité";
+    document.querySelector("#duplicate-event").hidden = false;
+    showOverlapWarning();
     els.dialog.showModal();
     els.pageShell.classList.add("is-event-form-open");
     els.title.focus();
@@ -988,6 +1124,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     const record = { id, title: els.title.value.trim(), category: els.category.value, date: els.date.value,
       start: els.start.value, end: els.end.value, location: els.location.value.trim(), note: els.note.value.trim(),
       cancelled: els.cancelled.checked, completed: els.completed.checked };
+    if (findOverlaps(record, events).length && !window.confirm("Cette activité chevauche une autre activité. Enregistrer quand même ?")) return;
     if (!record.title || !record.date) { els.error.textContent = "Ajoute un nom et un jour pour cette activité."; return; }
     if (sharedMode) {
       const i = events.findIndex(item => item.id === id); if (i >= 0) events[i] = record; else events.push(record);
@@ -1059,6 +1196,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         chip.setAttribute("aria-pressed", String(selected));
       });
       renderDays();
+      renderSearch();
     });
   });
 

@@ -50,3 +50,23 @@ Dans « Suivi financier → Mes factures mensuelles », indique le nom, le monta
 ## Budget : catégories, modification et report
 
 Les dépenses sont modifiables depuis leur ligne. Les catégories alimentent un graphique mensuel avec montants et pourcentages. Le report du mois précédent est volontaire : le bouton calcule salaire + report reçu − dépenses, puis remplace le report du mois affiché après confirmation. Un déficit est également reporté. Modifier un ancien mois ne recalcule pas automatiquement les reports suivants ; utiliser à nouveau le bouton. Activer les catégories et le report avec `supabase/migrations/20261026010000_extend_finances.sql` après validation. Sans cette migration, les dépenses restent consultables et modifiables sans catégorie.
+
+## Confort et synchronisation
+
+- Le bouton de thème alterne clair/sombre et mémorise uniquement cette préférence sur l’appareil. Le thème système est utilisé à la première ouverture.
+- La recherche par nom couvre toutes les semaines chargées, ignore les accents et respecte le filtre de catégorie. Les résultats affichent leur date.
+- Dans le formulaire d’une activité, « Dupliquer » prépare une nouvelle activité sans l’enregistrer immédiatement et remet les statuts à zéro.
+- Sur ordinateur, glisser une activité vers un autre jour la déplace. Sur téléphone et au clavier, ouvrir l’activité et modifier sa date offre la même possibilité.
+- Un chevauchement produit un avertissement et demande confirmation à l’enregistrement/déplacement. Les activités annulées et les horaires simplement adjacents ne sont pas des conflits.
+- La synchronisation en direct recharge les données du planning courant après un changement. Les formulaires financiers et d’objectifs en cours de saisie sont préservés ; leurs mises à jour attendent la sortie du formulaire. La désinscription est faite à la déconnexion. Les suppressions déclenchent une relecture limitée au planning courant.
+
+### Activation des nouveautés du 26 octobre
+
+Exécuter dans l’ordre, après validation dans Supabase SQL Editor :
+1. `supabase/migrations/20261026000000_add_weekly_goals.sql` : objectifs partagés.
+2. `supabase/migrations/20261026010000_extend_finances.sql` : catégories et report financier.
+3. `supabase/migrations/20261026020000_enable_planning_realtime.sql` : tables dans la publication Realtime. Nécessite les migrations précédentes, notamment les factures mensuelles.
+
+Ces scripts ne sont pas exécutés par le déploiement web. Le fonctionnement des règles RLS, de la publication et de la synchronisation entre deux comptes doit être vérifié sur le projet Supabase réel après activation. Les tests locaux simulent les réponses et événements Supabase.
+
+Tests : `node --test tests/regressions.cjs`, puis `python3 tests/mobile.py`, `python3 tests/planning.py`, `python3 tests/finances.py`, `python3 tests/bills.py` et `python3 tests/comfort.py` (Playwright et Chromium requis pour les tests navigateur).

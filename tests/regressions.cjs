@@ -94,3 +94,22 @@ test('Activity end defaults to two hours later, capped at the end of the day', (
   assert.equal(context.timeAfterStart('23:58',1),'23:59');
   assert.equal(context.timeAfterStart('',120),'');
 });
+test('Overlap detection excludes the same event, adjacent times and cancelled activities', () => {
+  const context=vm.createContext({});vm.runInContext(fn('findOverlaps'),context);
+  const record={id:'a',date:'2026-10-26',start:'09:00',end:'11:00'};
+  const others=[{...record},{...record,id:'b',start:'10:30',end:'12:00'}, {...record,id:'c',start:'11:00',end:'12:00'}, {...record,id:'d',cancelled:true}, {...record,id:'e',date:'2026-10-27'}];
+  assert.equal(context.findOverlaps(record,others).length,1);
+  assert.equal(context.findOverlaps({...record,cancelled:true},others).length,0);
+});
+test('Search ignores accents, case and surrounding whitespace', () => {
+  const context=vm.createContext({});vm.runInContext(fn('normalizeSearch'),context);
+  assert.equal(context.normalizeSearch('  ÉCOLE  '),'ecole');
+});
+test('Week-copy identifiers are stable and scoped to planner and target date', async () => {
+  const context=vm.createContext({crypto:require('node:crypto').webcrypto,TextEncoder});vm.runInContext(fn('copyActivityId'),context);
+  const id=await context.copyActivityId('source','2026-10-26','p');
+  assert.equal(id,await context.copyActivityId('source','2026-10-26','p'));
+  assert.notEqual(id,await context.copyActivityId('source','2026-10-27','p'));
+  assert.notEqual(id,await context.copyActivityId('source','2026-10-26','other'));
+  assert.match(id,/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+});
