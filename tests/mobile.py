@@ -32,9 +32,10 @@ try:
             # Expose finance layout without accessing a real account or database.
             page.evaluate("document.querySelector('#finance-panel').hidden=false")
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), width
-            field = page.locator('#finance-month').bounding_box()
-            panel = page.locator('#finance-panel').bounding_box()
-            assert field['x'] >= panel['x'] and field['x'] + field['width'] <= panel['x'] + panel['width'], width
+            if width > 900:
+                field = page.locator('#finance-month').bounding_box()
+                panel = page.locator('#finance-panel').bounding_box()
+                assert field['x'] >= panel['x'] and field['x'] + field['width'] <= panel['x'] + panel['width'], width
             if width <= 620:
                 days = page.locator('.day-column')
                 first, second, third = [days.nth(i).bounding_box() for i in range(3)]
@@ -45,16 +46,23 @@ try:
                 assert page.locator('#leave-shared').inner_text() == 'Quitter cette copie'
                 for label in ['.summary-card small', '.empty-day', '.event-time']:
                     assert page.locator(label).first.evaluate('(e)=>parseFloat(getComputedStyle(e).fontSize)') >= 12
+                assert not page.locator('.activity-report').is_visible()
+                page.locator('.mobile-sections a[data-page=report]').click()
+                assert not page.locator('.planner').is_visible()
+                assert 'view=report' in page.url and '#share=' in page.url
                 assert page.locator('#report-cards').is_visible()
                 assert page.locator('.report-card').count() == 7
                 assert page.locator('.report-card dd').all_text_contents()[:4] == ['100 %', '1', '0', '1']
                 assert not page.locator('.report-table-wrap').is_visible()
                 assert page.evaluate("[...document.querySelectorAll('button')].filter(e=>e.getClientRects().length && !e.closest('.planner')).every(e=>e.getBoundingClientRect().height>=44)")
-                page.locator('.mobile-sections a[href="#report-heading"]').click()
-                assert page.locator('#report-heading').bounding_box()['y'] >= 60
+                page.locator('.mobile-sections a[data-page=planning]').click()
+                assert page.locator('.planner').is_visible()
+                assert not page.locator('.activity-report').is_visible()
             elif width <= 900:
+                page.locator('.mobile-sections a[data-page=report]').click()
                 assert page.locator('#report-cards').is_visible()
                 assert not page.locator('.report-table-wrap').is_visible()
+                page.locator('.mobile-sections a[data-page=planning]').click()
             else:
                 assert page.locator('.report-table-wrap').is_visible()
             page.locator('#open-form').click()

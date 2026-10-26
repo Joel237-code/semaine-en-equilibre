@@ -137,6 +137,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   }
 
   function showAuth(message = "") {
+    document.title = "Semaine pour Guyane";
     authEls.panel.hidden = false; authEls.setupPanel.hidden = true; authEls.plannerApp.hidden = true;
     authEls.signOut.hidden = true; els.storageLabel.textContent = "Connexion requise"; authEls.message.textContent = message;
   }
@@ -149,6 +150,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     authEls.signOut.hidden = !currentUser;
     els.financePanel.hidden = sharedMode || !plannerId;
     document.querySelector("#budget-shortcut").hidden = els.financePanel.hidden;
+    setMobilePage(mobilePageFromUrl());
   }
   function toDatabaseEvent(event) {
     return { id: event.id, planner_id: plannerId, title: event.title, category: event.category,
@@ -683,12 +685,38 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     renderSearch();
   }
 
+  const mobileLayout = window.matchMedia("(max-width: 900px)");
+  function mobilePageFromUrl() {
+    const value = new URL(location.href).searchParams.get("view");
+    return ["planning", "report", "budget"].includes(value) ? value : "planning";
+  }
+  function setMobilePage(page, navigate = false) {
+    if (!["planning", "report", "budget"].includes(page)) page = "planning";
+    if (page === "budget" && (sharedMode || els.financePanel.hidden)) page = "planning";
+    authEls.plannerApp.dataset.mobilePage = page;
+    document.title = mobileLayout.matches ? `${{ planning: "Planning", report: "Rapport", budget: "Budget" }[page]} · Semaine pour Guyane` : "Semaine pour Guyane";
+    for (const link of document.querySelectorAll(".mobile-sections a")) {
+      const target = new URL(location.href); target.searchParams.set("view", link.dataset.page); link.href = target.href;
+      if (link.dataset.page === page) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+    }
+    if (navigate) {
+      const url = new URL(location.href); url.searchParams.set("view", page);
+      if (url.href !== location.href) history.pushState(null, "", url);
+      window.scrollTo(0, 0);
+      const heading = document.querySelector(page === "planning" ? "#week-label" : page === "report" ? "#report-heading" : "#finance-heading");
+      heading.setAttribute("tabindex", "-1"); heading.focus({ preventScroll: true });
+    }
+  }
   document.querySelectorAll(".mobile-sections a").forEach(link => {
     link.addEventListener("click", event => {
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
-      document.querySelector(link.getAttribute("href"))?.scrollIntoView({ block: "start" });
+      if (mobileLayout.matches) setMobilePage(link.dataset.page, true);
     });
   });
+  window.addEventListener("popstate", () => { setMobilePage(mobilePageFromUrl()); if (mobileLayout.matches) window.scrollTo(0, 0); });
+  mobileLayout.addEventListener("change", () => setMobilePage(mobilePageFromUrl()));
 
   const report = Object.fromEntries(["period", "month", "start", "end", "message", "body", "cards"].map(name => [name, document.querySelector(`#report-${name}`)]));
   report.month.value = financeMonth;

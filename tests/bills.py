@@ -41,6 +41,7 @@ try:
   page.route('https://cdn.jsdelivr.net/**',lambda r:r.fulfill(body=module,content_type='application/javascript'))
   page.route('https://fonts.googleapis.com/**',lambda r:r.abort())
   page.goto(f'http://127.0.0.1:{server.server_port}/',wait_until='networkidle')
+  page.locator('.mobile-sections a[data-page=budget]').click()
   page.locator('.bill-settings summary').click()
   page.locator('#bill-label').fill('Électricité');page.locator('#bill-amount').fill('45');page.locator('#bill-day').fill('1')
   page.locator('#bill-form button').click()

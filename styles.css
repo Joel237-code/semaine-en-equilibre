@@ -415,3 +415,25 @@ html[data-theme="dark"] .overlap-warning { background: #493b23; color: #f1d39c; 
 html[data-theme="dark"] .finance-setup { background: #493b23; color: #f1d39c; }
 html[data-theme="dark"] :is(.finance-setup a,.bill-settings a,.expense-amount,.goal-reached) { color: #b1dab4; }
 html[data-theme="dark"] .add-button:hover, html[data-theme="dark"] .save-button:hover { background: #3c6749; }
+
+/* Mobile pages retain their forms and state while switching sections. */
+@media (max-width: 900px) {
+  html { scroll-padding-top: 16px; }
+  #planner-app { padding-bottom: calc(92px + env(safe-area-inset-bottom)); min-height: 70dvh; }
+  #planner-app[data-mobile-page="planning"] > :is(.activity-report,.finance-panel),
+  #planner-app[data-mobile-page="report"] > :is(.intro,.planner,.finance-panel),
+  #planner-app[data-mobile-page="budget"] > :is(.intro,.planner,.activity-report) { display: none; }
+  #planner-app[data-mobile-page="report"] .activity-report,
+  #planner-app[data-mobile-page="budget"] .finance-panel { margin-top: 20px; }
+  .mobile-sections { position: fixed; inset: auto 0 0; z-index: 5; display: flex; gap: 8px; margin: 0; padding: 8px max(12px, env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-right)); border-top: 1px solid var(--line); background: var(--card); box-shadow: 0 -4px 24px rgba(25,45,32,.08); }
+  .mobile-sections a { flex-direction: column; gap: 5px; min-height: 58px; padding: 8px 6px; border: 0; background: transparent; color: var(--muted); font-size: 12px; }
+  .mobile-sections a[aria-current="page"] { background: var(--green-soft); color: var(--green-dark); font-weight: 800; }
+  .mobile-sections svg { width: 23px; height: 23px; }
+  .page-shell:has(#planner-app:not([hidden])) footer { display: none; }
+}
+
+@media (min-width: 621px) and (max-width: 900px) {
+  #planner-app > .intro { min-height: 0; padding: 20px 8px; }
+  #planner-app > .intro .balance-art, #planner-app > .intro .intro-text { display: none; }
+  #planner-app > .intro h1 { margin: 0; font-size: 28px; }
+}

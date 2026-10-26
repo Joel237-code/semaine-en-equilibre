@@ -69,4 +69,8 @@ Exécuter dans l’ordre, après validation dans Supabase SQL Editor :
 
 Ces scripts ne sont pas exécutés par le déploiement web. Le fonctionnement des règles RLS, de la publication et de la synchronisation entre deux comptes doit être vérifié sur le projet Supabase réel après activation. Les tests locaux simulent les réponses et événements Supabase.
 
-Tests : `node --test tests/regressions.cjs`, puis `python3 tests/mobile.py`, `python3 tests/planning.py`, `python3 tests/finances.py`, `python3 tests/bills.py` et `python3 tests/comfort.py` (Playwright et Chromium requis pour les tests navigateur).
+Tests : `node --test tests/regressions.cjs`, puis `python3 tests/mobile.py`, `python3 tests/planning.py`, `python3 tests/finances.py`, `python3 tests/bills.py` et `python3 tests/comfort.py` et `python3 tests/navigation.py` (Playwright et Chromium requis pour les tests navigateur).
+
+## Navigation mobile
+
+Sur téléphone et tablette (jusqu’à 900 px), Planning, Rapport et Budget sont trois vues séparées, accessibles dans la barre de navigation en bas de l’écran. L’URL `?view=planning`, `?view=report` ou `?view=budget` permet une ouverture directe et les boutons Retour/Suivant du navigateur fonctionnent. Changer de vue ne recharge pas les données ni les formulaires. Les anciennes copies partagées conservent leur fragment d’URL et n’affichent pas le Budget. Sur grand écran, les sections restent sur la même page. Aucune migration SQL supplémentaire n’est nécessaire.
