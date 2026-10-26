@@ -355,3 +355,13 @@ input[type="month"]::-webkit-date-and-time-value { min-width: 0; text-align: lef
   .report-controls label { font-size: 12px; }
   .report-cards { grid-template-columns: minmax(0,1fr); }
 }
+
+.goals-settings { margin: 16px 0; padding: 14px; border: 1px solid var(--line); border-radius: 12px; font-size: 13px; }
+.goals-settings summary { min-height: 44px; cursor: pointer; font-weight: 700; }
+.goals-settings p, #planning-message { font-size: 13px; line-height: 1.5; color: #53675a; }
+.goals-inputs { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin: 12px 0; }
+.goals-inputs label { display: grid; gap: 8px; min-width: 0; }
+.summary-card .goal-progress { color: #53675a; font-size: 12px; line-height: 1.4; }
+.summary-card .goal-reached { color: var(--green-dark); font-weight: 700; }
+.toolbar-actions { flex-wrap: wrap; }
+@media(max-width:620px) { .goals-inputs { grid-template-columns: repeat(2,minmax(0,1fr)); } .toolbar-actions > button { width: 100%; } .summary-card { align-items: flex-start; } }

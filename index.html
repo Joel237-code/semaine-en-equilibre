@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=18">
-  <script type="module" src="app.js?v=20"></script>
+  <link rel="stylesheet" href="styles.css?v=19">
+  <script type="module" src="app.js?v=21"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -78,6 +78,11 @@
           <div class="summary-card"><span class="summary-icon work-icon">↗</span><span><strong id="work-count">0</strong><small>temps de travail</small></span></div>
         </div>
 
+        <details id="goals-settings" class="goals-settings">
+          <summary>Mes objectifs hebdomadaires</summary><p>Nombre d’activités à accomplir par semaine, partagé avec les membres du planning. Mets 0 pour désactiver un objectif.</p>
+          <form id="goals-form"><div id="goals-inputs" class="goals-inputs"></div><button class="save-button" type="submit" disabled>Enregistrer les objectifs</button></form>
+          <p id="goals-message" role="status" aria-live="polite"></p>
+        </details>
         <div class="agenda-toolbar">
           <div class="filters" role="group" aria-label="Filtrer les activités">
             <button class="filter-chip is-active" type="button" data-filter="all">Tout</button>
@@ -89,11 +94,13 @@
             <button class="filter-chip" type="button" data-filter="other"><span class="chip-dot other-dot"></span>Autre activité</button>
           </div>
           <div class="toolbar-actions">
+            <button class="copy-button" id="copy-previous-week" type="button">Copier la semaine précédente</button>
             <button class="add-button" id="open-form" type="button"><span aria-hidden="true">＋</span> Ajouter une activité</button>
           </div>
         </div>
 
         <div class="cloud-migration" id="migration-panel" hidden><span>Des activités sont enregistrées sur cet appareil. Veux-tu les importer dans le planning partagé&nbsp;?</span><button class="copy-button" id="import-local" type="button">Importer mes activités</button></div>
+        <p id="planning-message" role="status" aria-live="polite"></p>
         <div class="week-grid" id="week-grid" aria-live="polite"></div>
         <p class="privacy-note"><span aria-hidden="true">◈</span> Les activités sont synchronisées dans le cloud pour les comptes autorisés. Un lien de copie reste visible par toute personne qui le reçoit.</p>
       </section>

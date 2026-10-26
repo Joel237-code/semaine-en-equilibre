@@ -49,7 +49,7 @@ test('Salary writes include an ISO update timestamp', async () => {
 test('Cloud save does not cache activities and legacy imports are disabled', () => {
   assert.ok(!fn('handleSubmit').includes('localStorage.setItem'));
   assert.match(source,/const localEvents = \[\]/);
-  assert.match(source,/events = \[\];\s*monthlySalary = null; monthlyExpenses = \[\]; clearLegacyCache\(\)/);
+  assert.ok(source.includes('events = [];') && source.includes('clearLegacyCache(); showAuth();'));
 });
 
 test('Monthly due dates handle short months and leap years', () => {

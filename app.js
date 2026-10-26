@@ -88,6 +88,8 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   let events = sharedSnapshot ? loadEvents(sharedDraftKey, sharedSnapshot.events) : [...localEvents];
   let weekStart = sharedSnapshot ? parseDate(sharedSnapshot.week) : mondayOf(new Date());
   let activeFilter = "all";
+  let weeklyGoals = {};
+  let goalsReady = false;
   let plannerId = null;
   let currentUser = null;
   let financeMonth = dateKey(new Date()).slice(0, 7);
@@ -149,17 +151,21 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       cancelled: row.cancelled === true, completed: row.completed === true };
   }
   async function loadCloudEvents() {
+    const requestedPlanner = plannerId, requestedUser = currentUser?.id;
+    if (!requestedPlanner) return;
     const rows = [];
     const pageSize = 500;
     for (let offset = 0; ; offset += pageSize) {
       const { data, error } = await supabase.from("activities")
         .select("id,title,category,activity_date,start_time,end_time,location,note,cancelled,completed")
-        .eq("planner_id", plannerId).order("activity_date").order("start_time").order("id")
+        .eq("planner_id", requestedPlanner).order("activity_date").order("start_time").order("id")
         .range(offset, offset + pageSize - 1);
       if (error) throw error;
+      if (plannerId !== requestedPlanner || currentUser?.id !== requestedUser) return;
       rows.push(...(data || []));
       if (!data || data.length < pageSize) break;
     }
+    if (plannerId !== requestedPlanner || currentUser?.id !== requestedUser) return;
     events = rows.map(fromDatabaseEvent);
     authEls.migrationPanel.hidden = !(events.length === 0 && localEvents.length > 0);
     render();
@@ -393,11 +399,12 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     if (!user || (!force && currentUser?.id === user.id && plannerId)) return;
     currentUser = user;
     const { data: memberships, error } = await supabase.from("planner_members").select("planner_id,role").limit(1);
+    if (currentUser?.id !== user.id) return;
     if (error) { plannerId = null; showSetup("Connexion réussie, mais impossible de lire le planning. Vérifie les règles d’accès."); return; }
     if (!memberships?.length) { plannerId = null; showSetup("Ce compte n’est pas encore relié au planning. Une étape de configuration dans Supabase reste à faire."); return; }
     plannerId = memberships[0].planner_id;
     showPlanner();
-    try { await loadCloudEvents(); await loadFinanceData(); }
+    try { await loadCloudEvents(); await Promise.all([loadFinanceData(), loadGoals()]); }
     catch (error) {
       authEls.setupMessage.textContent = errorMessage(error, "Impossible de charger les activités.");
       authEls.setupPanel.hidden = false; authEls.plannerApp.hidden = true; els.storageLabel.textContent = "Erreur de synchronisation";
@@ -409,7 +416,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
         ++financeRequest; currentUser = null; plannerId = null; events = [];
-        monthlySalary = null; monthlyExpenses = []; clearLegacyCache(); showAuth();
+        monthlySalary = null; monthlyExpenses = []; weeklyGoals = {}; goalsReady = false; clearLegacyCache(); showAuth();
       }
       else if (session?.user && event !== "INITIAL_SESSION") window.setTimeout(() => handleAuthenticated(session.user), 0);
     });
@@ -558,6 +565,8 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.currentWeek.hidden = sharedMode;
     els.leaveShared.hidden = !sharedMode;
     els.shareNotice.hidden = !sharedMode;
+    document.querySelector("#copy-previous-week").hidden = sharedMode;
+    document.querySelector("#goals-settings").hidden = sharedMode;
     renderSummary();
     renderReport();
     renderDays();
@@ -631,8 +640,87 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     });
     for (const category of Object.keys(categories)) {
       els.counts[category].textContent = weekEvents.filter((event) => event.category === category).length;
+      let progress = els.counts[category].parentElement.querySelector(".goal-progress");
+      if (!progress) { progress = document.createElement("small"); progress.className = "goal-progress"; els.counts[category].parentElement.append(progress); }
+      const target = Number(weeklyGoals[category]) || 0;
+      const done = weekEvents.filter(event => event.category === category && event.completed && !event.cancelled).length;
+      progress.hidden = !target;
+      progress.textContent = target ? `${done} / ${target} accomplies` : "";
+      progress.classList.toggle("goal-reached", Boolean(target && done >= target));
     }
   }
+
+  function activitySignature(event) {
+    return JSON.stringify([event.date, event.title.trim(), event.category, event.start, event.end, event.location || "", event.note || ""]);
+  }
+  async function copyActivityId(sourceId, targetDate, planner) {
+    const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify([planner, sourceId, targetDate]))));
+    hash[6] = (hash[6] & 15) | 64; hash[8] = (hash[8] & 63) | 128;
+    const hex = [...hash.slice(0, 16)].map(byte => byte.toString(16).padStart(2, "0")).join("");
+    return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+  }
+  async function copyPreviousWeek() {
+    if (!plannerId || sharedMode) return;
+    const planner = plannerId, targetWeek = dateKey(weekStart);
+    const button = document.querySelector("#copy-previous-week"), message = document.querySelector("#planning-message");
+    button.disabled = true; message.textContent = "Copie en cours…";
+    try {
+      await loadCloudEvents();
+      if (planner !== plannerId || targetWeek !== dateKey(weekStart)) return;
+      const previousStart = dateKey(addDays(weekStart, -7)), previousEnd = dateKey(addDays(weekStart, -1));
+      const existing = new Set(events.map(activitySignature));
+      const source = events.filter(event => event.date >= previousStart && event.date <= previousEnd && !event.cancelled);
+      const copies = [];
+      for (const event of source) {
+        const date = dateKey(addDays(parseDate(event.date), 7));
+        const copy = { ...event, date, cancelled: false, completed: false };
+        if (existing.has(activitySignature(copy))) continue;
+        copy.id = await copyActivityId(event.id, date, planner);
+        existing.add(activitySignature(copy)); copies.push(toDatabaseEvent(copy));
+      }
+      if (planner !== plannerId || targetWeek !== dateKey(weekStart)) return;
+      if (!copies.length) { message.textContent = source.length ? "Ces activités sont déjà dans cette semaine." : "Aucune activité à copier depuis la semaine précédente."; return; }
+      const { error } = await supabase.from("activities").upsert(copies, { onConflict: "id", ignoreDuplicates: true });
+      if (error) throw error;
+      if (planner !== plannerId) return;
+      await loadCloudEvents();
+      if (targetWeek === dateKey(weekStart)) message.textContent = "Semaine copiée. Les activités annulées sont exclues et les statuts remis à zéro.";
+    } catch (error) { if (planner === plannerId) message.textContent = errorMessage(error, "Impossible de copier la semaine. Réessaie."); }
+    finally { button.disabled = false; }
+  }
+  document.querySelector("#copy-previous-week").addEventListener("click", copyPreviousWeek);
+  const goalsInputs = document.querySelector("#goals-inputs");
+  for (const [key, category] of Object.entries(categories)) {
+    const label = document.createElement("label"); label.textContent = category.label;
+    const input = document.createElement("input"); input.type = "number"; input.min = "0"; input.max = "99"; input.step = "1"; input.value = "0"; input.required = true; input.inputMode = "numeric"; input.className = "text-input"; input.name = key;
+    label.append(input); goalsInputs.append(label);
+  }
+  async function loadGoals() {
+    const planner = plannerId;
+    if (!planner || sharedMode) return;
+    const { data, error } = await supabase.from("planner_weekly_goals").select("category,target").eq("planner_id", planner);
+    if (planner !== plannerId) return;
+    goalsReady = !error;
+    weeklyGoals = error ? {} : Object.fromEntries((data || []).map(row => [row.category, row.target]));
+    document.querySelector("#goals-form button").disabled = !goalsReady;
+    document.querySelector("#goals-message").textContent = error ? "Les objectifs ne sont pas encore disponibles. Vérifie la configuration Supabase." : "";
+    for (const input of goalsInputs.querySelectorAll("input")) input.value = weeklyGoals[input.name] || 0;
+    renderSummary();
+  }
+  document.querySelector("#goals-form").addEventListener("submit", async event => {
+    event.preventDefault(); if (!plannerId || !goalsReady) return;
+    const planner = plannerId, button = event.target.querySelector("button");
+    const records = [...goalsInputs.querySelectorAll("input")].map(input => ({ planner_id: planner, category: input.name, target: Number(input.value) }));
+    if (records.some(row => !Number.isInteger(row.target) || row.target < 0 || row.target > 99)) return;
+    button.disabled = true;
+    try {
+      const { error } = await supabase.from("planner_weekly_goals").upsert(records, { onConflict: "planner_id,category" });
+      if (error) throw error;
+      if (planner !== plannerId) return;
+      await loadGoals(); document.querySelector("#goals-message").textContent = "Objectifs enregistrés.";
+    } catch (error) { if (planner === plannerId) document.querySelector("#goals-message").textContent = errorMessage(error, "Impossible d’enregistrer les objectifs."); }
+    finally { button.disabled = false; }
+  });
 
   function makeEventCard(event) {
     const card = document.createElement("button");
