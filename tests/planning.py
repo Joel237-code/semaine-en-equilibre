@@ -34,8 +34,9 @@ try:
   page.locator('#copy-previous-week').click()
   page.wait_for_function("document.querySelectorAll('.event-card').length===1")
   assert 'is-completed' not in page.locator('.event-card').get_attribute('class')
-  page.locator('#copy-previous-week').click()
-  page.wait_for_function("document.querySelector('#planning-message').textContent.includes('déjà')")
+  assert not page.locator('#copy-previous-week').is_visible()
+  page.locator('#copy-previous-week').dispatch_event('click')
+  page.wait_for_function("document.querySelector('#planning-message').textContent.includes('semaine vide')")
   assert page.locator('.event-card').count()==1
   assert page.locator('#goals-settings').count()==0
   assert not page.locator('.summary-row').is_visible()

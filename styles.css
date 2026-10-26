@@ -439,3 +439,10 @@ html[data-theme="dark"] .add-button:hover, html[data-theme="dark"] .save-button:
 html[data-theme="dark"] .sync-status { color: var(--muted); }
 
 .theme-toggle-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+
+.copy-week-prompt { margin: 18px 0; padding: 28px 20px; border: 1px solid var(--green); border-radius: 16px; background: var(--green-soft); text-align: center; }
+.copy-week-prompt[hidden] { display: none; }
+.copy-week-prompt h3 { margin: 0 0 10px; color: var(--ink); font: 700 18px Manrope, sans-serif; }
+.copy-week-prompt p { margin: 0 0 18px; font-size: 14px; line-height: 1.6; color: var(--ink); }
+.copy-week-prompt .save-button { min-height: 48px; font-size: 14px; white-space: normal; }
+@media(max-width:620px) { .copy-week-prompt { padding: 24px 16px; } .copy-week-prompt .save-button { width: 100%; } }

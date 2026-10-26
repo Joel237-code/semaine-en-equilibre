@@ -664,7 +664,6 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.currentWeek.hidden = sharedMode;
     els.leaveShared.hidden = !sharedMode;
     els.shareNotice.hidden = !sharedMode;
-    document.querySelector("#copy-previous-week").hidden = sharedMode;
     renderReport();
     renderDays();
   }
@@ -773,14 +772,20 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     const hex = [...hash.slice(0, 16)].map(byte => byte.toString(16).padStart(2, "0")).join("");
     return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
   }
+  function weekHasActivities(start, records = events) {
+    const first = dateKey(start), last = dateKey(addDays(start, 6));
+    return records.some(event => event.date >= first && event.date <= last);
+  }
   async function copyPreviousWeek() {
     if (!plannerId || sharedMode) return;
     const planner = plannerId, targetWeek = dateKey(weekStart);
     const button = document.querySelector("#copy-previous-week"), message = document.querySelector("#planning-message");
+    if (weekHasActivities(weekStart)) { message.textContent = "La copie est disponible uniquement pour une semaine vide."; return; }
     button.disabled = true; message.textContent = "Copie en cours…";
     try {
       await loadCloudEvents();
       if (planner !== plannerId || targetWeek !== dateKey(weekStart)) return;
+      if (weekHasActivities(weekStart)) { message.textContent = "La semaine contient maintenant des activités : la copie a été annulée."; return; }
       const previousStart = dateKey(addDays(weekStart, -7)), previousEnd = dateKey(addDays(weekStart, -1));
       const existing = new Set(events.map(activitySignature));
       const source = events.filter(event => event.date >= previousStart && event.date <= previousEnd && !event.cancelled);
@@ -839,6 +844,9 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
   function renderDays() {
     els.grid.replaceChildren();
+    const copyPrompt = document.querySelector("#copy-week-prompt");
+    copyPrompt.hidden = sharedMode || !plannerId || weekHasActivities(weekStart);
+    if (!copyPrompt.hidden) return;
     const today = dateKey(new Date());
 
     for (let index = 0; index < 7; index += 1) {

@@ -109,3 +109,12 @@ test('Week-copy identifiers are stable and scoped to planner and target date', a
   assert.notEqual(id,await context.copyActivityId('source','2026-10-26','other'));
   assert.match(id,/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
 });
+test('A week containing any activity is not empty, including cancelled activities', () => {
+  const context=vm.createContext({dateKey:d=>d.toISOString().slice(0,10),addDays:(d,n)=>new Date(d.getTime()+n*86400000)});
+  vm.runInContext(fn('weekHasActivities'),context);
+  const monday=new Date('2026-10-26T00:00:00Z');
+  assert.equal(context.weekHasActivities(monday,[]),false);
+  assert.equal(context.weekHasActivities(monday,[{date:'2026-10-27',cancelled:true}]),true);
+  assert.equal(context.weekHasActivities(monday,[{date:'2026-11-01',completed:true}]),true);
+  assert.equal(context.weekHasActivities(monday,[{date:'2026-10-25'},{date:'2026-11-02'}]),false);
+});
