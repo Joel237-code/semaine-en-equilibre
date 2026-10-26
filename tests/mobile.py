@@ -40,14 +40,21 @@ try:
                 first, second, third = [days.nth(i).bounding_box() for i in range(3)]
                 assert abs(first['y'] - second['y']) < 1 and third['y'] > first['y'], width
                 assert second['x'] > first['x'], width
-                assert page.locator('.event-title').evaluate('(e)=>getComputedStyle(e).fontSize') == '10px'
+                assert page.locator('.event-title').evaluate('(e)=>getComputedStyle(e).fontSize') == '13px'
+                assert page.locator('.intro').bounding_box()['height'] < 100
+                assert page.locator('#leave-shared').inner_text() == 'Quitter cette copie'
+                for label in ['.summary-card small', '.empty-day', '.event-time']:
+                    assert page.locator(label).first.evaluate('(e)=>parseFloat(getComputedStyle(e).fontSize)') >= 12
                 assert page.locator('#report-cards').is_visible()
                 assert page.locator('.report-card').count() == 7
-                assert page.locator('.report-card dd').all_text_contents()[:4] == ['1', '0', '1', '100 %']
+                assert page.locator('.report-card dd').all_text_contents()[:4] == ['100 %', '1', '0', '1']
                 assert not page.locator('.report-table-wrap').is_visible()
                 assert page.evaluate("[...document.querySelectorAll('button')].filter(e=>e.getClientRects().length && !e.closest('.planner')).every(e=>e.getBoundingClientRect().height>=44)")
                 page.locator('.mobile-sections a[href="#report-heading"]').click()
                 assert page.locator('#report-heading').bounding_box()['y'] >= 60
+            elif width <= 900:
+                assert page.locator('#report-cards').is_visible()
+                assert not page.locator('.report-table-wrap').is_visible()
             else:
                 assert page.locator('.report-table-wrap').is_visible()
             page.locator('#open-form').click()

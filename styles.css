@@ -312,3 +312,46 @@ input[type="month"]::-webkit-date-and-time-value { min-width: 0; text-align: lef
   .planner .today-button { height: 34px; }
   .planner .add-button { min-height: 39px; font-size: 11px; }
 }
+
+/* Reports share the planning typography; narrow layouts use cards. */
+.activity-report { font-family: inherit; font-size: 13px; }
+.activity-report h2 { margin: 0; font: 700 25px Manrope, sans-serif; letter-spacing: -.05em; }
+.activity-report .optional, #report-message { color: #53675a; font-size: 12px; line-height: 1.5; }
+.report-table { font-family: inherit; }
+.report-table caption { color: #53675a; font-size: 13px; font-weight: 700; text-align: left; padding: 0 0 12px; }
+@media (max-width: 900px) {
+  .report-table-wrap { display: none; }
+  .report-cards { display: grid; gap: 10px; margin-top: 16px; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .report-card { min-width: 0; border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--card); }
+  .report-card:first-child { background: var(--green-soft); border-color: #bccfba; }
+  .report-card h3 { margin: 0 0 12px; font: 700 14px Manrope, sans-serif; }
+  .report-card dl { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px 10px; margin: 0; font-size: 12px; }
+  .report-card dt { min-width: 0; color: #53675a; overflow-wrap: anywhere; }
+  .report-card dd { margin: 0; font-size: 13px; font-weight: 700; }
+  .report-card .report-rate { font-size: 20px; color: var(--green-dark); }
+  .report-rate-label { align-self: center; }
+  .report-controls { gap: 12px; }
+  .report-controls > label { min-width: 0; flex: 1 1 180px; }
+}
+@media (max-width: 620px) {
+  #planner-app > .intro { padding: 12px 4px; min-height: 0; }
+  #planner-app > .intro h1 { margin: 0; font-size: 23px; line-height: 1.25; }
+  #planner-app > .intro h1 br { display: none; }
+  #planner-app > .intro .eyebrow, #planner-app > .intro .intro-text, #planner-app > .intro .balance-art { display: none; }
+  .planner-heading { flex-wrap: wrap; row-gap: 12px; }
+  .planner .week-controls { flex-wrap: wrap; }
+  .summary-card { min-width: 0; }
+  .summary-card small { font-size: 12px; color: #53675a; line-height: 1.35; }
+  .summary-icon { flex-shrink: 0; }
+  .summary-card strong { font-size: 16px; }
+  .day-name, .event-time, .event-location { font-size: 12px; }
+  .event-title { font-size: 13px; line-height: 1.4; }
+  .day-column { min-width: 0; }
+  .empty-day { font-size: 12px; color: #617064; }
+  .filter-chip { font-size: 12px; }
+  .privacy-note { font-size: 12px; color: #617064; line-height: 1.5; }
+  .planner .add-button { font-size: 12px; }
+  .activity-report h2 { font-size: 22px; }
+  .report-controls label { font-size: 12px; }
+  .report-cards { grid-template-columns: minmax(0,1fr); }
+}

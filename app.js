@@ -596,9 +596,8 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       return;
     }
     const selected = events.filter(event => (!start || event.date >= start) && (!end || event.date <= end));
-    report.message.textContent = (sharedMode ? "Copie partagée : seules les activités présentes dans cette copie sont comptées. " : "") +
-      (selected.length ? `${selected.length} activité(s) enregistrée(s). ` : "Aucune activité pour cette période. ") +
-      "Taux = accomplies / enregistrées, activités annulées incluses.";
+    report.message.textContent = (sharedMode ? "Cette copie uniquement · " : "") +
+      (selected.length ? `${selected.length} activité(s) enregistrée(s).` : "Aucune activité sur cette période.");
     for (const [category, label] of [["all", "Général"], ...Object.entries(categories).map(([key, value]) => [key, value.label])]) {
       const records = category === "all" ? selected : selected.filter(event => event.category === category);
       const cancelled = records.filter(event => event.cancelled).length;
@@ -612,10 +611,13 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       const card = document.createElement("article"); card.className = "report-card";
       const title = document.createElement("h3"); title.textContent = label;
       const list = document.createElement("dl");
-      const labels = ["Enregistrées", "Annulées", "Accomplies / exécutées", "Taux d’accomplissement"];
-      [...row.querySelectorAll("td")].forEach((cell, index) => {
+      const labels = ["Enregistrées", "Annulées", "Accomplies", "Taux d’accomplissement"];
+      const cells = [...row.querySelectorAll("td")];
+      [3, 0, 1, 2].forEach(index => {
+        const cell = cells[index];
         const term = document.createElement("dt"); term.textContent = labels[index];
         const value = document.createElement("dd"); value.textContent = cell.textContent;
+        if (index === 3) { term.className = "report-rate-label"; value.className = "report-rate"; }
         list.append(term, value);
       });
       card.append(title, list); report.cards.append(card);

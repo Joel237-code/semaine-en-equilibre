@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=17">
-  <script type="module" src="app.js?v=19"></script>
+  <link rel="stylesheet" href="styles.css?v=18">
+  <script type="module" src="app.js?v=20"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -44,7 +44,7 @@
       <section class="intro">
         <div class="intro-copy">
           <p class="eyebrow">TON ESPACE, TON RYTHME</p>
-          <h1>Une semaine qui<br><span>te ressemble.</span></h1>
+          <h1>Une semaine qui <br><span>te ressemble.</span></h1>
           <p class="intro-text">Fais de la place pour ce qui compte : apprendre, découvrir, te recentrer et bouger.</p>
         </div>
         <div class="balance-art" aria-hidden="true">
@@ -63,7 +63,7 @@
           <div class="week-controls">
             <button class="icon-button" id="previous-week" type="button" aria-label="Semaine précédente">←</button>
             <button class="today-button" id="current-week" type="button">Aujourd’hui</button>
-            <button class="today-button" id="leave-shared" type="button" hidden>Mon planning</button>
+            <button class="today-button" id="leave-shared" type="button" hidden>Quitter cette copie</button>
             <button class="icon-button" id="next-week" type="button" aria-label="Semaine suivante">→</button>
           </div>
         </div>
@@ -106,9 +106,9 @@
           <label id="report-end-field" hidden>Au <input class="text-input" id="report-end" type="date"></label>
         </div>
         <p id="report-message" role="status" aria-live="polite"></p>
-        <p class="optional">Enregistrées = toutes les activités. Les activités supprimées ne sont pas comptabilisées.</p>
+        <p class="optional">Taux = accomplies / enregistrées. Activités supprimées exclues.</p>
         <div class="report-table-wrap"><table class="report-table">
-          <caption class="field-label">Bilan général et par catégorie</caption>
+          <caption>Vue générale et catégories</caption>
           <thead><tr><th scope="col">Catégorie</th><th scope="col">Enregistrées</th><th scope="col">Annulées</th><th scope="col">Accomplies / exécutées</th><th scope="col">Taux d’accomplissement</th></tr></thead>
           <tbody id="report-body"></tbody>
         </table></div>
