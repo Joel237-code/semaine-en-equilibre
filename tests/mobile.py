@@ -42,9 +42,11 @@ try:
                 assert abs(first['y'] - second['y']) < 1 and third['y'] > first['y'], width
                 assert second['x'] > first['x'], width
                 assert page.locator('.event-title').evaluate('(e)=>getComputedStyle(e).fontSize') == '13px'
-                assert page.locator('.intro').bounding_box()['height'] < 100
+                assert not page.locator('.intro').is_visible()
+                assert not page.locator('.summary-row').is_visible()
+                assert not page.locator('.filters').is_visible()
                 assert page.locator('#leave-shared').inner_text() == 'Quitter cette copie'
-                for label in ['.summary-card small', '.empty-day', '.event-time']:
+                for label in ['.empty-day', '.event-time']:
                     assert page.locator(label).first.evaluate('(e)=>parseFloat(getComputedStyle(e).fontSize)') >= 12
                 assert not page.locator('.activity-report').is_visible()
                 page.locator('.mobile-sections a[data-page=report]').click()

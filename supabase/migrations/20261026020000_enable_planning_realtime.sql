@@ -6,7 +6,7 @@ begin
   if not exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
     raise exception 'La publication supabase_realtime doit être activée dans ce projet.';
   end if;
-  foreach table_name in array array['activities','planner_weekly_goals','planner_expenses','planner_monthly_budgets','planner_recurring_bills'] loop
+  foreach table_name in array array['activities','planner_expenses','planner_monthly_budgets','planner_recurring_bills'] loop
     if to_regclass(format('public.%I', table_name)) is null then
       raise exception 'Table manquante : %. Exécuter les migrations précédentes.', table_name;
     end if;

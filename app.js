@@ -94,10 +94,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   let realtimeChannel = null;
   let realtimeTimer = null;
   let realtimePending = new Set();
-  let weeklyGoals = {};
-  let goalsReady = false;
   let cloudRequest = 0;
-  let goalsRequest = 0;
   let plannerId = null;
   let currentUser = null;
   let financeMonth = dateKey(new Date()).slice(0, 7);
@@ -511,7 +508,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     plannerId = memberships[0].planner_id;
     showPlanner();
     startRealtime();
-    try { await loadCloudEvents(); await Promise.all([loadFinanceData(), loadGoals()]); }
+    try { await loadCloudEvents(); await loadFinanceData(); }
     catch (error) {
       authEls.setupMessage.textContent = errorMessage(error, "Impossible de charger les activités.");
       authEls.setupPanel.hidden = false; authEls.plannerApp.hidden = true; els.storageLabel.textContent = "Erreur de synchronisation";
@@ -522,12 +519,11 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     const { data, error } = await supabase.auth.getSession();
     supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
-        ++financeRequest; ++cloudRequest; ++goalsRequest; stopRealtime(); currentUser = null; plannerId = null; events = [];
+        ++financeRequest; ++cloudRequest; stopRealtime(); currentUser = null; plannerId = null; events = [];
         resetExpenseForm(); els.financeSalaryForm.reset(); document.querySelector("#bill-form").reset();
         document.querySelector("#activity-search").value = "";
-        monthlySalary = null; monthlyExpenses = []; monthlyCarry = 0; financeOptionsReady = false; editingExpenseId = null; weeklyGoals = {}; goalsReady = false;
+        monthlySalary = null; monthlyExpenses = []; monthlyCarry = 0; financeOptionsReady = false; editingExpenseId = null;
         recurringBills = []; paidBillIds = new Set(); billsReady = false;
-        document.querySelector("#goals-form").reset(); document.querySelector("#goals-form button").disabled = true;
         renderFinance(); renderBills(); render(); clearLegacyCache(); showAuth();
       }
       else if (session?.user && event !== "INITIAL_SESSION") window.setTimeout(() => handleAuthenticated(session.user), 0);
@@ -678,7 +674,6 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.leaveShared.hidden = !sharedMode;
     els.shareNotice.hidden = !sharedMode;
     document.querySelector("#copy-previous-week").hidden = sharedMode;
-    document.querySelector("#goals-settings").hidden = sharedMode;
     renderSummary();
     renderReport();
     renderDays();
@@ -691,6 +686,14 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     return ["planning", "report", "budget"].includes(value) ? value : "planning";
   }
   function setMobilePage(page, navigate = false) {
+    if (mobileLayout.matches && activeFilter !== "all") {
+      activeFilter = "all";
+      document.querySelectorAll(".filter-chip").forEach(chip => {
+        const selected = chip.dataset.filter === "all";
+        chip.classList.toggle("is-active", selected); chip.setAttribute("aria-pressed", String(selected));
+      });
+      renderDays(); renderSearch();
+    }
     if (!["planning", "report", "budget"].includes(page)) page = "planning";
     if (page === "budget" && (sharedMode || els.financePanel.hidden)) page = "planning";
     authEls.plannerApp.dataset.mobilePage = page;
@@ -779,13 +782,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     });
     for (const category of Object.keys(categories)) {
       els.counts[category].textContent = weekEvents.filter((event) => event.category === category).length;
-      let progress = els.counts[category].parentElement.querySelector(".goal-progress");
-      if (!progress) { progress = document.createElement("small"); progress.className = "goal-progress"; els.counts[category].parentElement.append(progress); }
-      const target = Number(weeklyGoals[category]) || 0;
-      const done = weekEvents.filter(event => event.category === category && event.completed && !event.cancelled).length;
-      progress.hidden = !target;
-      progress.textContent = target ? `${done} / ${target} accomplies` : "";
-      progress.classList.toggle("goal-reached", Boolean(target && done >= target));
+
     }
   }
 
@@ -828,39 +825,6 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     finally { button.disabled = false; }
   }
   document.querySelector("#copy-previous-week").addEventListener("click", copyPreviousWeek);
-  const goalsInputs = document.querySelector("#goals-inputs");
-  for (const [key, category] of Object.entries(categories)) {
-    const label = document.createElement("label"); label.textContent = category.label;
-    const input = document.createElement("input"); input.type = "number"; input.min = "0"; input.max = "99"; input.step = "1"; input.value = "0"; input.required = true; input.inputMode = "numeric"; input.className = "text-input"; input.name = key;
-    label.append(input); goalsInputs.append(label);
-  }
-  async function loadGoals() {
-    const planner = plannerId, request = ++goalsRequest;
-    if (!planner || sharedMode) return;
-    const { data, error } = await supabase.from("planner_weekly_goals").select("category,target").eq("planner_id", planner);
-    if (request !== goalsRequest || planner !== plannerId) return;
-    goalsReady = !error;
-    weeklyGoals = error ? {} : Object.fromEntries((data || []).map(row => [row.category, row.target]));
-    document.querySelector("#goals-form button").disabled = !goalsReady;
-    document.querySelector("#goals-message").textContent = error ? "Les objectifs ne sont pas encore disponibles. Vérifie la configuration Supabase." : "";
-    if (!document.querySelector("#goals-form").contains(document.activeElement)) for (const input of goalsInputs.querySelectorAll("input")) input.value = weeklyGoals[input.name] || 0;
-    renderSummary();
-  }
-  document.querySelector("#goals-form").addEventListener("submit", async event => {
-    event.preventDefault(); if (!plannerId || !goalsReady) return;
-    const planner = plannerId, button = event.target.querySelector("button");
-    const records = [...goalsInputs.querySelectorAll("input")].map(input => ({ planner_id: planner, category: input.name, target: Number(input.value) }));
-    if (records.some(row => !Number.isInteger(row.target) || row.target < 0 || row.target > 99)) return;
-    button.disabled = true;
-    try {
-      const { error } = await supabase.from("planner_weekly_goals").upsert(records, { onConflict: "planner_id,category" });
-      if (error) throw error;
-      if (planner !== plannerId) return;
-      await loadGoals(); document.querySelector("#goals-message").textContent = "Objectifs enregistrés.";
-    } catch (error) { if (planner === plannerId) document.querySelector("#goals-message").textContent = errorMessage(error, "Impossible d’enregistrer les objectifs."); }
-    finally { button.disabled = false; }
-  });
-
   function makeEventCard(event) {
     const card = document.createElement("button");
     card.type = "button";
@@ -1036,25 +1000,24 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       if (planner !== plannerId || user !== currentUser?.id) return;
       // Keep in-progress financial and goal forms intact while another device writes.
       const active = document.activeElement;
-      if (active?.closest("#salary-form,#expense-form,#bill-form,#goals-form")) { realtimeTimer = window.setTimeout(flush, 1500); return; }
+      if (active?.closest("#salary-form,#expense-form,#bill-form")) { realtimeTimer = window.setTimeout(flush, 1500); return; }
       const tables = new Set(realtimePending); realtimePending.clear();
       try {
         const tasks = [];
         if (tables.has("activities")) tasks.push(loadCloudEvents());
-        if (tables.has("planner_weekly_goals")) tasks.push(loadGoals());
         if (["planner_expenses", "planner_monthly_budgets", "planner_recurring_bills"].some(table => tables.has(table))) tasks.push(loadFinanceData());
         await Promise.all(tasks);
       } catch { status.textContent = "Mise à jour impossible. Recharge pour réessayer."; }
     }
     realtimeChannel = supabase.channel(`planning-${planner}-${user}`);
-    for (const table of ["activities", "planner_weekly_goals", "planner_expenses", "planner_monthly_budgets", "planner_recurring_bills"]) {
+    for (const table of ["activities", "planner_expenses", "planner_monthly_budgets", "planner_recurring_bills"]) {
       for (const event of ["INSERT", "UPDATE"]) realtimeChannel.on("postgres_changes", { event, schema: "public", table, filter: `planner_id=eq.${planner}` }, () => queue(table));
       // Supabase does not support row filters for DELETE. Refetch only our current planner.
       realtimeChannel.on("postgres_changes", { event: "DELETE", schema: "public", table }, () => queue(table));
     }
     realtimeChannel.subscribe(state => {
       if (planner !== plannerId || user !== currentUser?.id) return;
-      if (state === "SUBSCRIBED") { status.textContent = "Synchronisation en direct active."; for (const table of ["activities", "planner_weekly_goals", "planner_expenses"]) queue(table); }
+      if (state === "SUBSCRIBED") { status.textContent = "Synchronisation en direct active."; for (const table of ["activities", "planner_expenses"]) queue(table); }
       else if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(state)) status.textContent = "Synchronisation interrompue. Recharge pour réessayer.";
     });
   }

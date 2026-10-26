@@ -44,7 +44,9 @@ try:
   assert page.locator('.activity-report').is_visible() and not page.locator('.planner').is_visible()
   page.set_viewport_size({'width':1024,'height':900})
   assert page.locator('.planner').is_visible() and page.locator('.finance-panel').is_visible()
+  page.locator('.filter-chip[data-filter=work]').click()
   page.set_viewport_size({'width':390,'height':844})
+  page.wait_for_function("document.querySelector('.filter-chip[data-filter=all]').classList.contains('is-active')")
   assert page.locator('.activity-report').is_visible() and not page.locator('.planner').is_visible()
   assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
   assert not errors,errors

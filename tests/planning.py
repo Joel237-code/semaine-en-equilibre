@@ -37,13 +37,11 @@ try:
   page.locator('#copy-previous-week').click()
   page.wait_for_function("document.querySelector('#planning-message').textContent.includes('déjà')")
   assert page.locator('.event-card').count()==1
-  page.locator('#goals-settings summary').click()
-  page.locator('#goals-inputs input[name=sport]').fill('3')
-  page.locator('#goals-form button').click()
-  page.wait_for_function("document.querySelector('#goals-message').textContent.includes('enregistrés')")
-  assert '0 / 3 accomplies' in page.locator('.summary-row').inner_text()
+  assert page.locator('#goals-settings').count()==0
+  assert not page.locator('.summary-row').is_visible()
+  assert not page.locator('.filters').is_visible()
   assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
   assert not errors,errors
-  print('PASS: copy previous week, reset status, repeat without duplicates, save shared goals and completed progress')
+  print('PASS: copy previous week, reset status, repeat without duplicates, no goals or category blocks on mobile')
   b.close()
 finally: server.shutdown()

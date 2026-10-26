@@ -43,9 +43,9 @@ Dans « Suivi financier → Mes factures mensuelles », indique le nom, le monta
 
 **Activation nécessaire :** faire valider puis exécuter `supabase/migrations/20261022000000_add_recurring_bills.sql` dans le SQL Editor Supabase. Ce script ajoute la table de factures avec les règles d’accès des membres, une référence facultative dans les dépenses et la protection contre les doublons. Sans migration, le suivi financier existant reste utilisable et la nouvelle fonction indique qu’une configuration est nécessaire. Aucune migration n’est exécutée automatiquement au déploiement.
 
-## Copie de semaine et objectifs
+## Copie de semaine
 
-« Copier la semaine précédente » ajoute les activités non annulées à la semaine affichée avec de nouveaux identifiants et des statuts remis à zéro. Les activités identiques déjà présentes sont ignorées ; des identifiants déterministes empêchent les doubles copies simultanées d'une même activité. Les activités existantes ne sont pas écrasées. Les objectifs sont des nombres hebdomadaires par catégorie ; la progression compte uniquement les activités accomplies, non annulées. Pour activer leur stockage partagé, valider puis exécuter `supabase/migrations/20261026000000_add_weekly_goals.sql`. Les copies partagées ne permettent pas la copie de semaine ni les objectifs cloud.
+« Copier la semaine précédente » ajoute les activités non annulées à la semaine affichée avec de nouveaux identifiants et des statuts remis à zéro. Les activités identiques déjà présentes sont ignorées ; des identifiants déterministes empêchent les doubles copies simultanées d'une même activité. Les activités existantes ne sont pas écrasées. Les copies partagées ne permettent pas la copie de semaine cloud.
 
 ## Budget : catégories, modification et report
 
@@ -58,14 +58,13 @@ Les dépenses sont modifiables depuis leur ligne. Les catégories alimentent un 
 - Dans le formulaire d’une activité, « Dupliquer » prépare une nouvelle activité sans l’enregistrer immédiatement et remet les statuts à zéro.
 - Sur ordinateur, glisser une activité vers un autre jour la déplace. Sur téléphone et au clavier, ouvrir l’activité et modifier sa date offre la même possibilité.
 - Un chevauchement produit un avertissement et demande confirmation à l’enregistrement/déplacement. Les activités annulées et les horaires simplement adjacents ne sont pas des conflits.
-- La synchronisation en direct recharge les données du planning courant après un changement. Les formulaires financiers et d’objectifs en cours de saisie sont préservés ; leurs mises à jour attendent la sortie du formulaire. La désinscription est faite à la déconnexion. Les suppressions déclenchent une relecture limitée au planning courant.
+- La synchronisation en direct recharge les données du planning courant après un changement. Les formulaires financiers en cours de saisie sont préservés ; leurs mises à jour attendent la sortie du formulaire. La désinscription est faite à la déconnexion. Les suppressions déclenchent une relecture limitée au planning courant.
 
 ### Activation des nouveautés du 26 octobre
 
 Exécuter dans l’ordre, après validation dans Supabase SQL Editor :
-1. `supabase/migrations/20261026000000_add_weekly_goals.sql` : objectifs partagés.
-2. `supabase/migrations/20261026010000_extend_finances.sql` : catégories et report financier.
-3. `supabase/migrations/20261026020000_enable_planning_realtime.sql` : tables dans la publication Realtime. Nécessite les migrations précédentes, notamment les factures mensuelles.
+1. `supabase/migrations/20261026010000_extend_finances.sql` : catégories et report financier.
+2. `supabase/migrations/20261026020000_enable_planning_realtime.sql` : tables dans la publication Realtime. Nécessite les migrations précédentes, notamment les factures mensuelles.
 
 Ces scripts ne sont pas exécutés par le déploiement web. Le fonctionnement des règles RLS, de la publication et de la synchronisation entre deux comptes doit être vérifié sur le projet Supabase réel après activation. Les tests locaux simulent les réponses et événements Supabase.
 
@@ -74,3 +73,5 @@ Tests : `node --test tests/regressions.cjs`, puis `python3 tests/mobile.py`, `py
 ## Navigation mobile
 
 Sur téléphone et tablette (jusqu’à 900 px), Planning, Rapport et Budget sont trois vues séparées, accessibles dans la barre de navigation en bas de l’écran. L’URL `?view=planning`, `?view=report` ou `?view=budget` permet une ouverture directe et les boutons Retour/Suivant du navigateur fonctionnent. Changer de vue ne recharge pas les données ni les formulaires. Les anciennes copies partagées conservent leur fragment d’URL et n’affichent pas le Budget. Sur grand écran, les sections restent sur la même page. Aucune migration SQL supplémentaire n’est nécessaire.
+
+Les objectifs hebdomadaires ont été retirés de l’interface et des requêtes de l’application. Les anciennes tables et données Supabase ne sont pas supprimées. Sur mobile, le résumé par catégorie, les filtres de catégorie et l’introduction sont masqués ; les catégories restent disponibles dans les activités et le rapport.
