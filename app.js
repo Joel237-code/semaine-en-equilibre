@@ -984,7 +984,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   const themeToggle = document.querySelector("#theme-toggle");
   function renderThemeToggle() {
     const dark = document.documentElement.dataset.theme === "dark";
-    themeToggle.textContent = dark ? "Mode clair" : "Mode sombre"; themeToggle.setAttribute("aria-pressed", String(dark));
+    themeToggle.querySelector(".theme-toggle-label").textContent = dark ? "Mode clair" : "Mode sombre"; themeToggle.setAttribute("aria-pressed", String(dark));
     document.querySelector('meta[name="theme-color"]').content = dark ? "#15221c" : "#f6f4ec";
   }
   themeToggle.addEventListener("click", () => {

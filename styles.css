@@ -431,9 +431,11 @@ html[data-theme="dark"] .add-button:hover, html[data-theme="dark"] .save-button:
   .planner .agenda-toolbar { justify-content: flex-end; }
 }
 
-/* Reserve the light-mode label width so toggling themes never reflows the header. */
-#theme-toggle { white-space: nowrap; min-inline-size: max-content; }
-#theme-toggle::after { content: "Mode sombre"; display: block; height: 0; visibility: hidden; overflow: hidden; }
+/* Reserve the compact dark-mode label width so toggling themes never reflows the header. */
+#theme-toggle { position: relative; white-space: nowrap; min-inline-size: max-content; }
+#theme-toggle::after { content: "Mode clair"; display: block; height: 0; visibility: hidden; overflow: hidden; }
 
 .sync-status { color: #53675a; font-size: 12px; line-height: 1.5; }
 html[data-theme="dark"] .sync-status { color: var(--muted); }
+
+.theme-toggle-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
