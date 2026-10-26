@@ -380,7 +380,6 @@ input[type="month"]::-webkit-date-and-time-value { min-width: 0; text-align: lef
 .overlap-warning { background: #fff1d6; color: #79531d; padding: 12px; border-radius: 10px; font-size: 14px; line-height: 1.5; }
 .overlap-warning[hidden] { display: none; }
 .day-column.drop-target { outline: 3px solid var(--green); outline-offset: 2px; }
-#duplicate-event { white-space: normal; }
 @media(max-width:620px) { .dialog-actions button { min-width: 40%; } }
 html[data-theme="dark"] { color-scheme: dark; --ink: #e4eee6; --muted: #abbcaf; --paper: #15221c; --card: #203128; --line: #405447; --green: #497d59; --green-dark: #b1dab4; --green-soft: #2b4433; }
 html[data-theme="dark"] body { background: var(--paper); color: var(--ink); }

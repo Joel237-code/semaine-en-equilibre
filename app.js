@@ -923,12 +923,6 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   }
   for (const field of [els.date, els.end, els.cancelled]) field.addEventListener("input", showOverlapWarning);
   els.completed.addEventListener("change", showOverlapWarning);
-  document.querySelector("#duplicate-event").addEventListener("click", () => {
-    els.eventId.value = ""; els.cancelled.checked = false; els.completed.checked = false;
-    els.cancelledOption.hidden = true; els.completedOption.hidden = true; els.delete.hidden = true;
-    document.querySelector("#duplicate-event").hidden = true;
-    els.formTitle.textContent = "Dupliquer l’activité"; syncActivityStatusControls(); showOverlapWarning(); els.date.focus();
-  });
   async function moveActivity(id, date) {
     if (movingActivity) return;
     const source = events.find(event => event.id === id); if (!source || source.date === date) return;
@@ -1022,7 +1016,6 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
   function resetForm() {
     els.form.reset();
-    document.querySelector("#duplicate-event").hidden = true;
     document.querySelector("#activity-overlap").hidden = true;
     els.eventId.value = "";
     els.start.value = "09:00";
@@ -1064,7 +1057,6 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     syncActivityStatusControls();
     els.delete.hidden = false;
     els.formTitle.textContent = "Modifier l’activité";
-    document.querySelector("#duplicate-event").hidden = false;
     showOverlapWarning();
     els.dialog.showModal();
     els.pageShell.classList.add("is-event-form-open");

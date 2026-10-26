@@ -45,11 +45,8 @@ try:
   assert page.locator('html').get_attribute('data-theme')=='dark'
   assert page.locator('#activity-search, #search-results').count()==0
   page.locator('#week-grid .event-card').first.click()
-  page.locator('#duplicate-event').click()
-  next_date=page.evaluate("(()=>{const d=new Date();d.setDate(d.getDate()+1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})()")
-  page.locator('#event-date').fill(next_date)
-  page.locator('#save-event').click()
-  page.wait_for_function("document.querySelectorAll('#week-grid .event-card').length===2")
+  assert page.locator('#duplicate-event').count()==0
+  page.locator('#close-form').click()
   page.locator('#open-form').click();page.locator('#event-title').fill('Test conflit');page.locator('#event-start').fill('09:30')
   assert page.locator('#activity-overlap').is_visible()
   page.locator('#close-form').click()
@@ -66,6 +63,6 @@ try:
   assert page.locator('#auth-panel').is_visible()
   assert page.locator('#week-grid .event-card').count()==0
   assert not errors,errors
-  print('PASS: dark mode persistence, duplicate, overlap warning, drag move, remote insert/delete refresh')
+  print('PASS: dark mode persistence, no duplication option, overlap warning, drag move, remote insert/delete refresh')
   b.close()
 finally: server.shutdown()
