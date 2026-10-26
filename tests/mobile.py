@@ -29,6 +29,8 @@ try:
             page.route('https://fonts.googleapis.com/**', lambda r: r.abort())
             page.goto(f'http://127.0.0.1:{server.server_port}/#share={encoded}', wait_until='networkidle')
             page.locator(".day-column").first.wait_for()
+            assert page.locator('#goals-settings, #goals-form').count() == 0
+            assert page.locator('.summary-row, .summary-card').count() == 0
             # Expose finance layout without accessing a real account or database.
             page.evaluate("document.querySelector('#finance-panel').hidden=false")
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), width

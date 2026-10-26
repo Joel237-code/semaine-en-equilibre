@@ -57,14 +57,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     completedOption: document.querySelector("#completed-option"),
     error: document.querySelector("#form-error"),
     delete: document.querySelector("#delete-event"),
-    counts: {
-      school: document.querySelector("#school-count"),
-      work: document.querySelector("#work-count"),
-      spiritual: document.querySelector("#spirit-count"),
-      selfcare: document.querySelector("#selfcare-count"),
-      sport: document.querySelector("#sport-count"),
-      other: document.querySelector("#other-count")
-    }
+
   };
 
   const authEls = {
@@ -674,7 +667,6 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.leaveShared.hidden = !sharedMode;
     els.shareNotice.hidden = !sharedMode;
     document.querySelector("#copy-previous-week").hidden = sharedMode;
-    renderSummary();
     renderReport();
     renderDays();
     renderSearch();
@@ -772,17 +764,6 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         list.append(term, value);
       });
       card.append(title, list); report.cards.append(card);
-    }
-  }
-
-  function renderSummary() {
-    const weekEvents = events.filter((event) => {
-      const date = parseDate(event.date);
-      return date >= weekStart && date <= addDays(weekStart, 6);
-    });
-    for (const category of Object.keys(categories)) {
-      els.counts[category].textContent = weekEvents.filter((event) => event.category === category).length;
-
     }
   }
 
