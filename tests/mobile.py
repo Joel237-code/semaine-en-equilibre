@@ -52,6 +52,14 @@ try:
                 assert page.locator('.report-table-wrap').is_visible()
             page.locator('#open-form').click()
             assert page.locator('#event-dialog').is_visible()
+            assert page.locator('#event-date').input_value() == page.evaluate("new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0')+'-'+String(new Date().getDate()).padStart(2,'0')")
+            assert page.locator('#event-end').input_value() == '11:00'
+            page.locator('#event-start').fill('15:30')
+            assert page.locator('#event-end').input_value() == '17:30'
+            page.locator('#event-end').fill('14:30')
+            assert not page.locator('#event-end').evaluate('(e)=>e.checkValidity()')
+            page.locator('#event-start').fill('22:30')
+            assert page.locator('#event-end').input_value() == '23:59'
             if width <= 620:
                 assert page.locator('#event-dialog').bounding_box()['height'] <= height
                 page.set_viewport_size({'width': width, 'height': 350})

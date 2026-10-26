@@ -727,12 +727,30 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.cancelled.disabled = els.completed.checked;
   }
 
+  function timeAfterStart(start, minutes) {
+    if (!/^\d{2}:\d{2}$/.test(start)) return "";
+    const [hours, mins] = start.split(":").map(Number);
+    if (hours > 23 || mins > 59) return "";
+    const total = Math.min(hours * 60 + mins + minutes, 1439);
+    return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+  }
+  function updateEndMinimum() {
+    els.end.min = timeAfterStart(els.start.value, 1);
+  }
+  function updateEndFromStart() {
+    updateEndMinimum();
+    els.end.value = timeAfterStart(els.start.value, 120);
+  }
+  els.start.addEventListener("input", updateEndFromStart);
+  els.start.addEventListener("change", updateEndFromStart);
+
   function resetForm() {
     els.form.reset();
     els.eventId.value = "";
     els.start.value = "09:00";
-    els.end.value = "10:00";
-    els.date.value = dateKey(weekStart);
+    els.end.value = "11:00";
+    els.date.value = dateKey(new Date());
+    updateEndMinimum();
     els.error.textContent = "";
     els.delete.hidden = true;
     els.cancelled.checked = false;
@@ -758,6 +776,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.date.value = event.date;
     els.start.value = event.start;
     els.end.value = event.end;
+    updateEndMinimum();
     els.location.value = event.location || "";
     els.note.value = event.note || "";
     els.cancelled.checked = event.cancelled === true;

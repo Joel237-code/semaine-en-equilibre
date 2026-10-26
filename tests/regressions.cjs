@@ -81,3 +81,12 @@ test('Bill fields reset after successful writes and remain intact after errors',
     assert.equal(button.disabled,false);
   }
 });
+
+test('Activity end defaults to two hours later, capped at the end of the day', () => {
+  const context=vm.createContext({}); vm.runInContext(fn('timeAfterStart'),context);
+  assert.equal(context.timeAfterStart('09:00',120),'11:00');
+  assert.equal(context.timeAfterStart('15:45',120),'17:45');
+  assert.equal(context.timeAfterStart('22:30',120),'23:59');
+  assert.equal(context.timeAfterStart('23:58',1),'23:59');
+  assert.equal(context.timeAfterStart('',120),'');
+});

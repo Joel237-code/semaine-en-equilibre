@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=17">
-  <script type="module" src="app.js?v=18"></script>
+  <script type="module" src="app.js?v=19"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -184,13 +184,14 @@
         <div class="form-field"><label class="field-label" for="event-date">Jour</label><input class="text-input" id="event-date" name="date" type="date" required></div>
       </div>
       <div class="form-row">
-        <div class="form-field"><label class="field-label" for="event-start">Début</label><input class="text-input" id="event-start" name="start" type="time" value="09:00" required></div>
-        <div class="form-field"><label class="field-label" for="event-end">Fin</label><input class="text-input" id="event-end" name="end" type="time" value="10:00" required></div>
+        <div class="form-field"><label class="field-label" for="event-start">Début</label><input class="text-input" id="event-start" name="start" type="time" max="23:58" value="09:00" required></div>
+        <div class="form-field"><label class="field-label" for="event-end">Fin</label><input class="text-input" id="event-end" name="end" type="time" min="09:01" value="11:00" required></div>
       </div>
       <label class="field-label" for="event-location">Lieu <span class="optional">(facultatif)</span></label>
       <input class="text-input" id="event-location" name="location" maxlength="100" placeholder="Ex. Bibliothèque">
       <label class="field-label" for="event-note">Note <span class="optional">(facultatif)</span></label>
       <textarea class="text-input note-input" id="event-note" name="note" maxlength="240" rows="2" placeholder="Une petite précision…"></textarea>
+      <p class="optional">La fin se règle à deux heures après le début, au plus tard à 23 h 59. Tu peux l’ajuster.</p>
       <label class="cancelled-toggle" id="cancelled-option" hidden><input id="event-cancelled" type="checkbox"><span><strong>Activité annulée</strong><small>Elle restera visible en gris et barrée.</small></span></label>
       <label class="cancelled-toggle completed-toggle" id="completed-option" hidden><input id="event-completed" type="checkbox"><span><strong>Activité accomplie</strong><small>Une coche verte apparaîtra dans le calendrier.</small></span></label>
       <p class="form-error" id="form-error" role="alert"></p>
