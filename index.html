@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=19">
-  <script type="module" src="app.js?v=21"></script>
+  <link rel="stylesheet" href="styles.css?v=20">
+  <script type="module" src="app.js?v=22"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -129,8 +129,11 @@
         <div class="finance-summary">
           <article class="finance-summary-card"><span>Salaire du mois</span><strong id="salary-total">À renseigner</strong></article>
           <article class="finance-summary-card"><span>Dépenses</span><strong id="expenses-total">0,00 €</strong></article>
+          <article class="finance-summary-card" id="carry-card" hidden><span>Report du mois précédent</span><strong id="carry-total">0,00 €</strong></article>
           <article class="finance-summary-card finance-balance"><span>Reste après dépenses</span><strong id="money-left">—</strong></article>
         </div>
+        <div class="carry-controls"><button class="copy-button" id="carry-previous" type="button" disabled>Reporter le solde du mois précédent</button><p id="finance-options-message" role="status"></p></div>
+        <section class="expense-chart-section" aria-labelledby="expense-chart-heading"><h3 id="expense-chart-heading">Répartition des dépenses</h3><div id="expense-chart"></div></section>
         <div class="finance-forms">
           <form class="finance-form" id="salary-form">
             <h3>Mon salaire</h3>
@@ -138,15 +141,16 @@
             <div class="finance-input-row"><input class="text-input" id="salary-amount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Ex. 1500" required><button class="save-button" type="submit">Enregistrer</button></div>
           </form>
           <form class="finance-form" id="expense-form">
-            <h3>Ajouter une dépense</h3>
+            <h3 id="expense-form-heading">Ajouter une dépense</h3>
             <div class="bill-suggestions" aria-labelledby="bill-due-heading"><h4 id="bill-due-heading">Factures à ajouter</h4><p id="bill-status" role="status" aria-live="polite"></p><div id="bill-suggestions"></div></div>
+            <label class="field-label" for="expense-category">Catégorie</label><select class="text-input" id="expense-category" disabled></select>
             <label class="field-label" for="expense-label">À quoi correspond-elle&nbsp;?</label>
             <input class="text-input" id="expense-label" maxlength="80" placeholder="Ex. Courses" required>
             <div class="form-row">
               <div class="form-field"><label class="field-label" for="expense-amount">Montant (€)</label><input class="text-input" id="expense-amount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Ex. 24.50" required></div>
               <div class="form-field"><label class="field-label" for="expense-date">Date</label><input class="text-input" id="expense-date" type="date" required></div>
             </div>
-            <button class="save-button finance-add-button" type="submit">Ajouter la dépense</button>
+            <button class="save-button finance-add-button" type="submit">Ajouter la dépense</button><button class="cancel-button" id="cancel-expense-edit" type="button" hidden>Annuler la modification</button>
           </form>
         </div>
         <details class="bill-settings">

@@ -14,7 +14,7 @@ const bills=[], expenses=[];
 export function createClient(){return {
  auth:{getSession:async()=>({data:{session:{user:{id:'user'}}}}),onAuthStateChange(){}},
  from(table){let mode='read',value,filters={}; const q={
- limit(){return q},select(){return q},eq(k,v){filters[k]=v;return q},gte(){return q},lt(){return q},order(){return q},range(){return q},maybeSingle(){return q},
+ limit(){return q},select(){return q},eq(k,v){filters[k]=v;return q},gte(){return q},lt(){return q},order(){return q},range(){return q},maybeSingle(){return q},range(){return q},
  insert(v){mode='insert';value=v;return q},delete(){mode='delete';return q},update(v){mode='update';value=v;return q},
  then(resolve){let data=[];
  if(table==='planner_members')data=[{planner_id:'p',role:'member'}];
@@ -54,7 +54,7 @@ try:
   assert page.locator('#bill-suggestions .bill-row').count()==0
   assert 'Électricité' in page.locator('#expense-list').inner_text()
   page.on('dialog',lambda d:d.accept())
-  page.locator('#expense-list button').click()
+  page.locator('#expense-list .expense-remove').click()
   suggestion.wait_for()
   page.locator('#bill-list button').click()
   page.wait_for_function("document.querySelector('#bill-list').children.length===0")

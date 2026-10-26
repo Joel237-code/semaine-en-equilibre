@@ -46,3 +46,7 @@ Dans « Suivi financier → Mes factures mensuelles », indique le nom, le monta
 ## Copie de semaine et objectifs
 
 « Copier la semaine précédente » ajoute les activités non annulées à la semaine affichée avec de nouveaux identifiants et des statuts remis à zéro. Les activités identiques déjà présentes sont ignorées ; des identifiants déterministes empêchent les doubles copies simultanées d'une même activité. Les activités existantes ne sont pas écrasées. Les objectifs sont des nombres hebdomadaires par catégorie ; la progression compte uniquement les activités accomplies, non annulées. Pour activer leur stockage partagé, valider puis exécuter `supabase/migrations/20261026000000_add_weekly_goals.sql`. Les copies partagées ne permettent pas la copie de semaine ni les objectifs cloud.
+
+## Budget : catégories, modification et report
+
+Les dépenses sont modifiables depuis leur ligne. Les catégories alimentent un graphique mensuel avec montants et pourcentages. Le report du mois précédent est volontaire : le bouton calcule salaire + report reçu − dépenses, puis remplace le report du mois affiché après confirmation. Un déficit est également reporté. Modifier un ancien mois ne recalcule pas automatiquement les reports suivants ; utiliser à nouveau le bouton. Activer les catégories et le report avec `supabase/migrations/20261026010000_extend_finances.sql` après validation. Sans cette migration, les dépenses restent consultables et modifiables sans catégorie.

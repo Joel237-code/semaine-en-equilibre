@@ -365,3 +365,20 @@ input[type="month"]::-webkit-date-and-time-value { min-width: 0; text-align: lef
 .summary-card .goal-reached { color: var(--green-dark); font-weight: 700; }
 .toolbar-actions { flex-wrap: wrap; }
 @media(max-width:620px) { .goals-inputs { grid-template-columns: repeat(2,minmax(0,1fr)); } .toolbar-actions > button { width: 100%; } .summary-card { align-items: flex-start; } }
+
+.carry-controls { display: grid; gap: 8px; margin-bottom: 20px; }
+#finance-options-message { font-size: 13px; color: #53675a; }
+.expense-chart-section { margin: 20px 0; padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
+.expense-chart-section h3 { margin: 0 0 14px; font: 700 16px Manrope, sans-serif; }
+#expense-chart { display: grid; gap: 12px; font-size: 13px; color: var(--ink); }
+.chart-row { min-width: 0; }
+.chart-track { height: 10px; border-radius: 6px; background: var(--line); margin-top: 6px; overflow: hidden; }
+.chart-bar { height: 100%; background: var(--green); border-radius: inherit; }
+.expense-category-transport { background: #6d86bb; } .expense-category-housing { background: #a283b9; }
+.expense-category-health { background: #b36e65; } .expense-category-leisure { background: #bb8841; }
+.expense-category-bills { background: #659990; } .expense-category-other { background: #7a8178; }
+.expense-row { grid-template-columns: minmax(0,1fr) auto auto; }
+.expense-actions { display: flex; gap: 8px; align-items: center; }
+.expense-edit { min-height: 44px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); font-size: 12px; cursor: pointer; }
+#cancel-expense-edit { margin-top: 12px; }
+@media(max-width:620px) { .expense-row { grid-template-columns: minmax(0,1fr) auto; } .expense-actions { grid-column: 1 / -1; justify-content: flex-end; } .expense-remove { grid-column: auto; grid-row: auto; } .carry-controls > button { white-space: normal; min-height: 48px; } }

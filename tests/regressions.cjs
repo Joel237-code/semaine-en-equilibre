@@ -15,18 +15,22 @@ test('Only the latest financial request can render, including stale failures', a
     financeRequest: 0, plannerId: 'p', sharedMode: false, financeMonth: '2026-01', monthlySalary: null, monthlyExpenses: [],
     els: { financeMessage: element(), financeSetup: element(), financeEmpty: element(), financeExpenseList: element() },
     monthBounds: month => ({ start: month + '-01', end: month + '-31' }),
-    renderFinance() {}, renderBills() {}, loadBills: async () => {},
-    supabase: { from() {
-      const q = { select(){return q}, eq(){return q}, gte(){return q}, lt(){return q}, order(){return q}, maybeSingle(){return q},
-        then(resolve) { return new Promise(r => pending.push(r)).then(resolve); } }; return q;
+    renderFinance() {}, renderBills() {}, loadBills: async () => {}, loadFinanceOptions: async () => {},
+    supabase: { from(table) {
+      let month;
+      const q = { select(){return q}, eq(key,value){if(key==='month_start')month=value;return q}, gte(key,value){month=value;return q}, lt(){return q}, order(){return q}, maybeSingle(){return q}, range(){return q},
+        then(resolve) { return new Promise(r => pending.push({table,month,resolve:r})).then(resolve); } }; return q;
     } }
   });
+  vm.runInContext(fn('readExpenseRows'), context);
   vm.runInContext(fn('loadFinanceData'), context);
   const first = context.loadFinanceData(); await Promise.resolve();
   context.financeMonth = '2026-02';
   const second = context.loadFinanceData(); await Promise.resolve();
-  pending[2]({data:{salary:200}}); pending[3]({data:[]}); await second;
-  pending[0]({error:{code:'42501'}}); pending[1]({data:[]}); await first;
+  for (const item of pending.filter(item=>item.month==='2026-02-01')) item.resolve({data:item.table==='planner_monthly_budgets'?{salary:200}:[]});
+  await second;
+  for (const item of pending.filter(item=>item.month==='2026-01-01')) item.resolve(item.table==='planner_monthly_budgets'?{error:{code:'42501'}}:{data:[]});
+  await first;
   assert.equal(context.monthlySalary,200);
   assert.equal(context.els.financeMessage.textContent,'');
 });
@@ -61,7 +65,7 @@ test('Monthly due dates handle short months and leap years', () => {
 });
 test('Bill confirmation writes the occurrence only once per action with its reference', async () => {
   let payload;
-  const context=vm.createContext({billsReady:true,paidBillIds:new Set(),plannerId:'p',
+  const context=vm.createContext({billsReady:true,financeOptionsReady:false,paidBillIds:new Set(),plannerId:'p',
     changeBill:async(button,action)=>action(),supabase:{from:()=>({insert:async value=>{payload=value; return {error:null}}})}});
   vm.runInContext(fn('addBillExpense'),context);
   await context.addBillExpense({id:'b',label:'Electricité',amount:45},'2026-10-03',{});

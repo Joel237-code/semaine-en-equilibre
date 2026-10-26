@@ -97,6 +97,10 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   let paidBillIds = new Set();
   let billsReady = false;
   let financeRequest = 0;
+  let monthlyCarry = 0;
+  let financeOptionsReady = false;
+  let editingExpenseId = null;
+  const expenseCategories = { groceries: "Courses", transport: "Transport", housing: "Logement", health: "Santé", leisure: "Loisirs", bills: "Factures", other: "Autres" };
   let monthlySalary = null;
   let monthlyExpenses = [];
   const moneyFormat = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
@@ -183,8 +187,13 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.financeSalary.value = monthlySalary === null ? "" : Number(monthlySalary).toFixed(2);
     els.financeSalaryTotal.textContent = monthlySalary === null ? "À renseigner" : moneyFormat.format(Number(monthlySalary));
     els.financeExpenseTotal.textContent = moneyFormat.format(expensesTotal);
-    els.financeRemainder.textContent = monthlySalary === null ? "—" : moneyFormat.format(Number(monthlySalary) - expensesTotal);
-    els.financeRemainder.classList.toggle("is-negative", monthlySalary !== null && Number(monthlySalary) - expensesTotal < 0);
+    els.financeRemainder.textContent = monthlySalary === null ? "—" : moneyFormat.format(Number(monthlySalary) + monthlyCarry - expensesTotal);
+    els.financeRemainder.classList.toggle("is-negative", monthlySalary !== null && Number(monthlySalary) + monthlyCarry - expensesTotal < 0);
+    document.querySelector("#carry-card").hidden = !financeOptionsReady;
+    document.querySelector("#carry-total").textContent = moneyFormat.format(monthlyCarry);
+    document.querySelector("#carry-previous").disabled = !financeOptionsReady;
+    document.querySelector("#expense-category").disabled = !financeOptionsReady;
+    renderExpenseChart();
     els.financeExpenseList.replaceChildren();
     els.financeEmpty.hidden = monthlyExpenses.length > 0;
     for (const expense of monthlyExpenses) {
@@ -196,6 +205,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       label.textContent = expense.label;
       const date = document.createElement("small");
       date.textContent = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" }).format(parseDate(expense.expense_date));
+      if (financeOptionsReady) date.textContent += ` · ${expenseCategories[expense.category] || expenseCategories.other}`;
       details.append(label, date);
       const amount = document.createElement("strong");
       amount.className = "expense-amount";
@@ -206,7 +216,10 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       remove.textContent = "×";
       remove.setAttribute("aria-label", `Supprimer la dépense ${expense.label}`);
       remove.addEventListener("click", () => deleteExpense(expense.id));
-      row.append(details, amount, remove);
+      const edit = document.createElement("button"); edit.type = "button"; edit.className = "expense-edit"; edit.textContent = "Modifier";
+      edit.setAttribute("aria-label", `Modifier la dépense ${expense.label}`); edit.addEventListener("click", () => editExpense(expense));
+      const actions = document.createElement("div"); actions.className = "expense-actions"; actions.append(edit, remove);
+      row.append(details, amount, actions);
       els.financeExpenseList.append(row);
     }
   }
@@ -217,7 +230,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     const requestedMonth = financeMonth;
     const isCurrent = () => request === financeRequest && plannerId === requestedPlanner && financeMonth === requestedMonth;
     const { start, end } = monthBounds(requestedMonth);
-    monthlySalary = null;
+    monthlySalary = null; monthlyCarry = 0; financeOptionsReady = false;
     monthlyExpenses = [];
     billsReady = false; recurringBills = []; paidBillIds = new Set();
     renderBills();
@@ -229,8 +242,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     try {
       const [budgetResult, expensesResult] = await Promise.all([
         supabase.from("planner_monthly_budgets").select("salary").eq("planner_id", plannerId).eq("month_start", start).maybeSingle(),
-        supabase.from("planner_expenses").select("id,label,amount,expense_date").eq("planner_id", plannerId)
-          .gte("expense_date", start).lt("expense_date", end).order("expense_date").order("created_at")
+        readExpenseRows(requestedPlanner, requestedMonth, "id,label,amount,expense_date")
       ]);
       if (!isCurrent()) return;
       if (budgetResult.error) throw budgetResult.error;
@@ -239,7 +251,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       monthlyExpenses = expensesResult.data || [];
       renderFinance();
       els.financeMessage.textContent = "";
-      await loadBills(request, requestedPlanner, requestedMonth);
+      await Promise.all([loadBills(request, requestedPlanner, requestedMonth), loadFinanceOptions(request, requestedPlanner, requestedMonth)]);
     } catch (error) {
       if (!isCurrent()) return;
       els.financeMessage.textContent = error.code === "42501"
@@ -248,6 +260,89 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       els.financeSetup.hidden = !["PGRST205", "42P01"].includes(error.code);
     }
   }
+  for (const [key, label] of Object.entries(expenseCategories)) {
+    const option = document.createElement("option"); option.value = key; option.textContent = label;
+    document.querySelector("#expense-category").append(option);
+  }
+  document.querySelector("#expense-category").value = "other";
+  function expenseCategoryTotals(expenses) {
+    return Object.entries(expenseCategories).map(([key, label]) => ({ key, label, amount: expenses.filter(expense => (expense.category || "other") === key).reduce((sum, expense) => sum + Number(expense.amount), 0) })).filter(row => row.amount > 0);
+  }
+  function renderExpenseChart() {
+    const chart = document.querySelector("#expense-chart"); chart.replaceChildren();
+    if (!financeOptionsReady) { chart.textContent = "La répartition par catégorie nécessite la nouvelle configuration du budget."; return; }
+    const totals = expenseCategoryTotals(monthlyExpenses), total = totals.reduce((sum, row) => sum + row.amount, 0);
+    if (!total) { chart.textContent = "Aucune dépense pour ce mois."; return; }
+    for (const item of totals) {
+      const row = document.createElement("div"); row.className = "chart-row";
+      const text = document.createElement("span"); text.textContent = `${item.label} · ${moneyFormat.format(item.amount)} (${Math.round(item.amount / total * 100)} %)`;
+      const track = document.createElement("div"); track.className = "chart-track"; track.setAttribute("aria-hidden", "true");
+      const bar = document.createElement("div"); bar.className = `chart-bar expense-category-${item.key}`; bar.style.width = `${item.amount / total * 100}%`;
+      track.append(bar); row.append(text, track); chart.append(row);
+    }
+  }
+  async function readExpenseRows(planner, month, columns) {
+    const { start, end } = monthBounds(month), rows = [];
+    for (let offset = 0; ; offset += 500) {
+      const { data, error } = await supabase.from("planner_expenses").select(columns).eq("planner_id", planner).gte("expense_date", start).lt("expense_date", end).order("expense_date").order("id").range(offset, offset + 499);
+      if (error) return { data: null, error };
+      rows.push(...(data || [])); if (!data || data.length < 500) return { data: rows, error: null };
+    }
+  }
+  async function loadFinanceOptions(request, planner, month) {
+    const [budget, categoriesResult] = await Promise.all([
+      supabase.from("planner_monthly_budgets").select("carry_amount").eq("planner_id", planner).eq("month_start", `${month}-01`).maybeSingle(),
+      readExpenseRows(planner, month, "id,category")
+    ]);
+    if (request !== financeRequest || planner !== plannerId || month !== financeMonth) return;
+    const error = budget.error || categoriesResult.error;
+    financeOptionsReady = !error;
+    monthlyCarry = error ? 0 : Number(budget.data?.carry_amount || 0);
+    const categoryMap = new Map((categoriesResult.data || []).map(row => [row.id, row.category]));
+    monthlyExpenses = monthlyExpenses.map(expense => ({ ...expense, category: categoryMap.get(expense.id) || "other" }));
+    document.querySelector("#finance-options-message").textContent = error ? "Catégories et report indisponibles : vérifie la configuration Supabase du budget." : "";
+    renderFinance();
+  }
+  function resetExpenseForm() {
+    editingExpenseId = null; els.financeExpenseForm.reset();
+    els.financeExpenseDate.value = defaultFinanceDate(financeMonth);
+    document.querySelector("#expense-category").value = "other";
+    document.querySelector("#expense-form-heading").textContent = "Ajouter une dépense";
+    els.financeExpenseForm.querySelector("button[type=submit]").textContent = "Ajouter la dépense";
+    document.querySelector("#cancel-expense-edit").hidden = true;
+  }
+  function editExpense(expense) {
+    editingExpenseId = expense.id;
+    els.financeExpenseLabel.value = expense.label; els.financeExpenseAmount.value = expense.amount;
+    els.financeExpenseDate.value = expense.expense_date; document.querySelector("#expense-category").value = expense.category || "other";
+    document.querySelector("#expense-form-heading").textContent = "Modifier une dépense";
+    els.financeExpenseForm.querySelector("button[type=submit]").textContent = "Enregistrer la modification";
+    document.querySelector("#cancel-expense-edit").hidden = false;
+    els.financeExpenseForm.scrollIntoView({ block: "start" }); els.financeExpenseLabel.focus({ preventScroll: true });
+  }
+  document.querySelector("#cancel-expense-edit").addEventListener("click", resetExpenseForm);
+  document.querySelector("#carry-previous").addEventListener("click", async event => {
+    if (!financeOptionsReady || !plannerId) return;
+    const planner = plannerId, month = financeMonth, button = event.target;
+    const previous = dateKey(addDays(parseDate(`${month}-01`), -1)).slice(0, 7);
+    button.disabled = true;
+    try {
+      const [budget, expenses] = await Promise.all([
+        supabase.from("planner_monthly_budgets").select("salary,carry_amount").eq("planner_id", planner).eq("month_start", `${previous}-01`).maybeSingle(),
+        readExpenseRows(planner, previous, "amount")
+      ]);
+      if (budget.error) throw budget.error; if (expenses.error) throw expenses.error;
+      if (planner !== plannerId || month !== financeMonth) return;
+      if (!budget.data) { els.financeMessage.textContent = "Renseigne d’abord le budget du mois précédent pour calculer son solde."; return; }
+      const balance = Math.round((Number(budget.data.salary) + Number(budget.data.carry_amount || 0) - (expenses.data || []).reduce((sum, expense) => sum + Number(expense.amount), 0)) * 100) / 100;
+      if (!window.confirm(`Reporter ${moneyFormat.format(balance)} depuis ${previous} ? Ce montant remplacera le report actuel, sans s’y ajouter.`)) return;
+      const { error } = await supabase.from("planner_monthly_budgets").upsert({ planner_id: planner, month_start: `${month}-01`, carry_amount: balance, updated_at: new Date().toISOString() }, { onConflict: "planner_id,month_start", defaultToNull: false });
+      if (error) throw error;
+      if (planner === plannerId && month === financeMonth) { await loadFinanceData(); els.financeMessage.textContent = "Solde reporté. Recalcule-le si tu modifies le mois précédent."; }
+    } catch (error) { if (planner === plannerId && month === financeMonth) els.financeMessage.textContent = errorMessage(error, "Impossible de reporter le solde."); }
+    finally { button.disabled = !financeOptionsReady; }
+  });
+
   function billDueDate(month, day) {
     const [year, number] = month.split("-").map(Number);
     const lastDay = new Date(year, number, 0).getDate();
@@ -257,7 +352,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     const { start, end } = monthBounds(requestedMonth);
     const [bills, paid] = await Promise.all([
       supabase.from("planner_recurring_bills").select("id,label,amount,due_day,start_month").eq("planner_id", requestedPlanner).eq("active", true).order("due_day").order("label"),
-      supabase.from("planner_expenses").select("recurring_bill_id").eq("planner_id", requestedPlanner).gte("expense_date", start).lt("expense_date", end)
+      readExpenseRows(requestedPlanner, requestedMonth, "recurring_bill_id")
     ]);
     if (request !== financeRequest || requestedPlanner !== plannerId || requestedMonth !== financeMonth) return;
     const error = bills.error || paid.error;
@@ -307,7 +402,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   }
   async function addBillExpense(bill, due, button) {
     if (!billsReady || paidBillIds.has(bill.id)) return;
-    await changeBill(button, () => supabase.from("planner_expenses").insert({ planner_id: plannerId, label: bill.label, amount: bill.amount, expense_date: due, recurring_bill_id: bill.id }), "Facture ajoutée aux dépenses.");
+    await changeBill(button, () => supabase.from("planner_expenses").insert({ planner_id: plannerId, label: bill.label, amount: bill.amount, expense_date: due, recurring_bill_id: bill.id, ...(financeOptionsReady ? { category: "bills" } : {}) }), "Facture ajoutée aux dépenses.");
   }
   async function stopBill(bill, button) {
     if (!window.confirm(`Arrêter les propositions mensuelles pour « ${bill.label} » ? Les dépenses déjà ajoutées seront conservées.`)) return;
@@ -364,14 +459,14 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     const savedMonth = financeMonth, savedPlanner = plannerId;
     const isCurrent = () => savedMonth === financeMonth && savedPlanner === plannerId;
     try {
-      const { error } = await supabase.from("planner_expenses").insert({
-        planner_id: plannerId, label, amount, expense_date: expenseDate
-      });
+      const payload = { planner_id: plannerId, label, amount, expense_date: expenseDate };
+      if (financeOptionsReady) payload.category = document.querySelector("#expense-category").value;
+      const { error } = editingExpenseId
+        ? await supabase.from("planner_expenses").update(payload).eq("id", editingExpenseId).eq("planner_id", savedPlanner)
+        : await supabase.from("planner_expenses").insert(payload);
       if (error) throw error;
       if (!isCurrent()) return;
-      els.financeExpenseLabel.value = "";
-      els.financeExpenseAmount.value = "";
-      els.financeExpenseDate.value = defaultFinanceDate(financeMonth);
+      resetExpenseForm();
       await loadFinanceData();
       if (isCurrent()) els.financeMessage.textContent = "Dépense enregistrée.";
     } catch (error) {
@@ -416,7 +511,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
         ++financeRequest; currentUser = null; plannerId = null; events = [];
-        monthlySalary = null; monthlyExpenses = []; weeklyGoals = {}; goalsReady = false; clearLegacyCache(); showAuth();
+        monthlySalary = null; monthlyExpenses = []; monthlyCarry = 0; financeOptionsReady = false; editingExpenseId = null; weeklyGoals = {}; goalsReady = false; clearLegacyCache(); showAuth();
       }
       else if (session?.user && event !== "INITIAL_SESSION") window.setTimeout(() => handleAuthenticated(session.user), 0);
     });
@@ -933,6 +1028,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   els.financeExpenseDate.value = defaultFinanceDate(financeMonth);
   els.financeMonth.addEventListener("change", () => {
     financeMonth = els.financeMonth.value || dateKey(new Date()).slice(0, 7);
+    resetExpenseForm();
     els.financeExpenseDate.value = defaultFinanceDate(financeMonth);
     monthlySalary = null; monthlyExpenses = []; renderFinance();
     loadFinanceData();
