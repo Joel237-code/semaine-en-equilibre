@@ -59,6 +59,15 @@ try:
   page.wait_for_function("document.querySelector('.filter-chip[data-filter=all]').classList.contains('is-active')")
   assert page.locator('.activity-report').is_visible() and not page.locator('.planner').is_visible()
   assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+  for theme in ['light','dark']:
+   if page.locator('html').get_attribute('data-theme')!=theme:page.locator('#theme-toggle').click()
+   for view, selector in [('planning','#week-label'),('report','#report-heading'),('budget','#finance-heading')]:
+    page.keyboard.press('Tab')
+    page.locator(f'[data-page={view}]').focus()
+    assert page.locator(f'[data-page={view}]').evaluate('(e)=>getComputedStyle(e).outlineStyle')!='none'
+    page.keyboard.press('Enter')
+    assert page.locator(selector).evaluate('(e)=>getComputedStyle(e).outlineStyle')=='none'
+    assert page.locator(selector).evaluate('(e)=>document.activeElement===e')
   assert not errors,errors
   print('PASS: separate mobile pages, direct link, draft preservation, Back/Forward, reload, desktop and resize')
   browser.close()

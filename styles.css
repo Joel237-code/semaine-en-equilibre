@@ -445,3 +445,6 @@ html[data-theme="dark"] .sync-status { color: var(--muted); }
 .copy-week-prompt p { margin: 0 0 18px; font-size: 14px; line-height: 1.6; color: var(--ink); }
 .copy-week-prompt .save-button { min-height: 48px; font-size: 14px; white-space: normal; }
 @media(max-width:620px) { .copy-week-prompt { padding: 24px 16px; } .copy-week-prompt .save-button { width: 100%; } }
+
+/* Headings receive navigation focus for screen readers, without a control outline. */
+:is(#week-label, #report-heading, #finance-heading)[tabindex="-1"]:focus { outline: none; }
