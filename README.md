@@ -49,7 +49,7 @@ Dans « Suivi financier → Mes factures mensuelles », indique le nom, le monta
 
 ## Budget : catégories, modification et report
 
-Les dépenses sont modifiables depuis leur ligne. Les catégories alimentent un graphique mensuel avec montants et pourcentages. Le report du mois précédent est volontaire : le bouton calcule salaire + report reçu − dépenses, puis remplace le report du mois affiché après confirmation. Un déficit est également reporté. Modifier un ancien mois ne recalcule pas automatiquement les reports suivants ; utiliser à nouveau le bouton. Activer les catégories et le report avec `supabase/migrations/20261026010000_extend_finances.sql` après validation. Sans cette migration, les dépenses restent consultables et modifiables sans catégorie.
+Les dépenses sont modifiables depuis leur ligne. Les catégories alimentent un graphique mensuel avec montants et pourcentages. Le bouton de report du mois précédent a été retiré. Les reports déjà enregistrés restent affichés et inclus dans le solde ; aucune donnée n’est supprimée. Activer les catégories et le report avec `supabase/migrations/20261026010000_extend_finances.sql` après validation. Sans cette migration, les dépenses restent consultables et modifiables sans catégorie.
 
 ## Confort et synchronisation
 

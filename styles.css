@@ -360,7 +360,6 @@ input[type="month"]::-webkit-date-and-time-value { min-width: 0; text-align: lef
 .toolbar-actions { flex-wrap: wrap; }
 @media(max-width:620px) { .toolbar-actions > button { width: 100%; } .summary-card { align-items: flex-start; } }
 
-.carry-controls { display: grid; gap: 8px; margin-bottom: 20px; }
 #finance-options-message { font-size: 13px; color: #53675a; }
 .expense-chart-section { margin: 20px 0; padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
 .expense-chart-section h3 { margin: 0 0 14px; font: 700 16px Manrope, sans-serif; }
@@ -375,7 +374,7 @@ input[type="month"]::-webkit-date-and-time-value { min-width: 0; text-align: lef
 .expense-actions { display: flex; gap: 8px; align-items: center; }
 .expense-edit { min-height: 44px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); font-size: 12px; cursor: pointer; }
 #cancel-expense-edit { margin-top: 12px; }
-@media(max-width:620px) { .expense-row { grid-template-columns: minmax(0,1fr) auto; } .expense-actions { grid-column: 1 / -1; justify-content: flex-end; } .expense-remove { grid-column: auto; grid-row: auto; } .carry-controls > button { white-space: normal; min-height: 48px; } }
+@media(max-width:620px) { .expense-row { grid-template-columns: minmax(0,1fr) auto; } .expense-actions { grid-column: 1 / -1; justify-content: flex-end; } .expense-remove { grid-column: auto; grid-row: auto; } }
 
 .overlap-warning { background: #fff1d6; color: #79531d; padding: 12px; border-radius: 10px; font-size: 14px; line-height: 1.5; }
 .overlap-warning[hidden] { display: none; }

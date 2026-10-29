@@ -189,9 +189,8 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.financeExpenseTotal.textContent = moneyFormat.format(expensesTotal);
     els.financeRemainder.textContent = monthlySalary === null ? "—" : moneyFormat.format(Number(monthlySalary) + monthlyCarry - expensesTotal);
     els.financeRemainder.classList.toggle("is-negative", monthlySalary !== null && Number(monthlySalary) + monthlyCarry - expensesTotal < 0);
-    document.querySelector("#carry-card").hidden = !financeOptionsReady;
+    document.querySelector("#carry-card").hidden = !financeOptionsReady || monthlyCarry === 0;
     document.querySelector("#carry-total").textContent = moneyFormat.format(monthlyCarry);
-    document.querySelector("#carry-previous").disabled = !financeOptionsReady;
     document.querySelector("#expense-category").disabled = !financeOptionsReady;
     renderExpenseChart();
     els.financeExpenseList.replaceChildren();
@@ -321,28 +320,6 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.financeExpenseForm.scrollIntoView({ block: "start" }); els.financeExpenseLabel.focus({ preventScroll: true });
   }
   document.querySelector("#cancel-expense-edit").addEventListener("click", resetExpenseForm);
-  document.querySelector("#carry-previous").addEventListener("click", async event => {
-    if (!financeOptionsReady || !plannerId) return;
-    const planner = plannerId, month = financeMonth, button = event.target;
-    const previous = dateKey(addDays(parseDate(`${month}-01`), -1)).slice(0, 7);
-    button.disabled = true;
-    try {
-      const [budget, expenses] = await Promise.all([
-        supabase.from("planner_monthly_budgets").select("salary,carry_amount").eq("planner_id", planner).eq("month_start", `${previous}-01`).maybeSingle(),
-        readExpenseRows(planner, previous, "amount")
-      ]);
-      if (budget.error) throw budget.error; if (expenses.error) throw expenses.error;
-      if (planner !== plannerId || month !== financeMonth) return;
-      if (!budget.data) { els.financeMessage.textContent = "Renseigne d’abord le budget du mois précédent pour calculer son solde."; return; }
-      const balance = Math.round((Number(budget.data.salary) + Number(budget.data.carry_amount || 0) - (expenses.data || []).reduce((sum, expense) => sum + Number(expense.amount), 0)) * 100) / 100;
-      if (!window.confirm(`Reporter ${moneyFormat.format(balance)} depuis ${previous} ? Ce montant remplacera le report actuel, sans s’y ajouter.`)) return;
-      const { error } = await supabase.from("planner_monthly_budgets").upsert({ planner_id: planner, month_start: `${month}-01`, carry_amount: balance, updated_at: new Date().toISOString() }, { onConflict: "planner_id,month_start", defaultToNull: false });
-      if (error) throw error;
-      if (planner === plannerId && month === financeMonth) { await loadFinanceData(); els.financeMessage.textContent = "Solde reporté. Recalcule-le si tu modifies le mois précédent."; }
-    } catch (error) { if (planner === plannerId && month === financeMonth) els.financeMessage.textContent = errorMessage(error, "Impossible de reporter le solde."); }
-    finally { button.disabled = !financeOptionsReady; }
-  });
-
   function billDueDate(month, day) {
     const [year, number] = month.split("-").map(Number);
     const lastDay = new Date(year, number, 0).getDate();

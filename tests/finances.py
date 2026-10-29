@@ -11,7 +11,7 @@ server=ThreadingHTTPServer(('127.0.0.1',0),partial(Quiet,directory=str(Path(__fi
 Thread(target=server.serve_forever,daemon=True).start()
 module='''
 const month=new Date().toISOString().slice(0,7), previous=new Date(Number(month.slice(0,4)),Number(month.slice(5))-1,0).toISOString().slice(0,7);
-const budgets={[month]:{salary:1000,carry_amount:0},[previous]:{salary:500,carry_amount:25}};
+const budgets={[month]:{salary:1000,carry_amount:40},[previous]:{salary:500,carry_amount:25}};
 const expenses=[{id:'a',planner_id:'p',label:'Courses',amount:50,category:'groceries',expense_date:month+'-01'}, {id:'b',planner_id:'p',label:'Bus',amount:25,category:'transport',expense_date:month+'-02'}, {id:'c',planner_id:'p',label:'Ancien',amount:100,category:'other',expense_date:previous+'-01'}];
 export function createClient(){return {auth:{getSession:async()=>({data:{session:{user:{id:'u'}}}}),onAuthStateChange(){}},from(table){let mode='read',values,filters={},start,end;const q={
 select(){return q},eq(k,v){filters[k]=v;return q},limit(){return q},order(){return q},range(){return q},gte(k,v){start=v;return q},lt(k,v){end=v;return q},maybeSingle(){return q},
@@ -37,16 +37,11 @@ try:
   page.wait_for_function("document.querySelector('#expenses-total').textContent.includes('105')")
   assert 'Logement' in page.locator('#expense-chart').inner_text()
   assert '80' in page.locator('#expense-chart').inner_text()
-  page.on('dialog',lambda dialog:dialog.accept())
-  page.locator('#carry-previous').click()
-  page.wait_for_function("document.querySelector('#carry-total').textContent.includes('425')")
-  assert '1' in page.locator('#salary-total').inner_text()
-  assert '320' in page.locator('#money-left').inner_text()
-  page.locator('#carry-previous').click()
-  page.wait_for_function("document.querySelector('#finance-message').textContent.includes('reporté')")
-  assert '425' in page.locator('#carry-total').inner_text()
+  assert page.locator('#carry-previous').count()==0
+  assert '40' in page.locator('#carry-total').inner_text()
+  assert '935' in page.locator('#money-left').inner_text()
   assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
   assert not errors,errors
-  print('PASS: edit expense, change category, monthly chart, carry previous balance, repeat without accumulation')
+  print('PASS: edit expense, change category, monthly chart, no carry action, preserve existing carried balance')
   b.close()
 finally: server.shutdown()
