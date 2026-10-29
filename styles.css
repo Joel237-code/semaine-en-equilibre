@@ -451,3 +451,5 @@ html[data-theme="dark"] .sync-status { color: var(--muted); }
 #upcoming-bills { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
 #upcoming-bills[hidden] { display: none; }
 #upcoming-bills summary { min-height: 44px; cursor: pointer; font-size: 14px; font-weight: 700; }
+
+.expense-category-donations { background: #9b77aa; }

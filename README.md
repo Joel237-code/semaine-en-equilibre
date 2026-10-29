@@ -74,3 +74,7 @@ Tests : `node --test tests/regressions.cjs`, puis `python3 tests/mobile.py`, `py
 Sur téléphone et tablette (jusqu’à 900 px), Planning, Rapport et Budget sont trois vues séparées, accessibles dans la barre de navigation en bas de l’écran. L’URL `?view=planning`, `?view=report` ou `?view=budget` permet une ouverture directe et les boutons Retour/Suivant du navigateur fonctionnent. Changer de vue ne recharge pas les données ni les formulaires. Les anciennes copies partagées conservent leur fragment d’URL et n’affichent pas le Budget. Sur grand écran, les sections restent sur la même page. Aucune migration SQL supplémentaire n’est nécessaire.
 
 Les objectifs hebdomadaires ont été retirés de l’interface et des requêtes de l’application. Les anciennes tables et données Supabase ne sont pas supprimées. Le résumé par catégorie est supprimé de l’interface. Sur mobile, les filtres de catégorie et l’introduction sont masqués ; les catégories restent disponibles dans les activités et le rapport.
+
+### Dons et offrandes
+
+La catégorie « Dons et offrandes » (`donations`) est disponible dans les dépenses et leur graphique mensuel. Avant de l’utiliser, valider puis exécuter `supabase/migrations/20261029000000_add_donations_expense_category.sql` pour l’autoriser dans la contrainte des catégories. Les dépenses existantes sont conservées et les règles d’accès restent inchangées.

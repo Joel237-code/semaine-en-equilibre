@@ -97,7 +97,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   let monthlyCarry = 0;
   let financeOptionsReady = false;
   let editingExpenseId = null;
-  const expenseCategories = { groceries: "Courses", transport: "Transport", housing: "Logement", health: "Santé", leisure: "Loisirs", bills: "Factures", other: "Autres" };
+  const expenseCategories = { groceries: "Courses", transport: "Transport", housing: "Logement", health: "Santé", leisure: "Loisirs", bills: "Factures", donations: "Dons et offrandes", other: "Autres" };
   let monthlySalary = null;
   let monthlyExpenses = [];
   const moneyFormat = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });

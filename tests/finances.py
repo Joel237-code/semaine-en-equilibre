@@ -32,10 +32,11 @@ try:
   page.locator('.mobile-sections a[data-page=budget]').click()
   page.wait_for_function("document.querySelector('#expenses-total').textContent.includes('75')")
   page.locator('#expense-list .expense-edit').first.click()
-  page.locator('#expense-amount').fill('80');page.select_option('#expense-category','housing')
+  page.locator('#expense-amount').fill('80');page.select_option('#expense-category','donations')
   page.locator('#expense-form button[type=submit]').click()
   page.wait_for_function("document.querySelector('#expenses-total').textContent.includes('105')")
-  assert 'Logement' in page.locator('#expense-chart').inner_text()
+  assert 'Dons et offrandes' in page.locator('#expense-chart').inner_text()
+  assert 'Dons et offrandes' in page.locator('#expense-list').inner_text()
   assert '80' in page.locator('#expense-chart').inner_text()
   assert page.locator('#carry-previous').count()==0
   assert '40' in page.locator('#carry-total').inner_text()
