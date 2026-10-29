@@ -365,7 +365,8 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   }
   function renderBills() {
     const suggestions = document.querySelector("#bill-suggestions"), list = document.querySelector("#bill-list");
-    suggestions.replaceChildren(); list.replaceChildren();
+    const upcoming = document.querySelector("#bill-upcoming"), upcomingSection = document.querySelector("#upcoming-bills");
+    suggestions.replaceChildren(); list.replaceChildren(); upcoming.replaceChildren();
     document.querySelector("#bill-form button").disabled = !billsReady;
     const today = dateKey(new Date());
     for (const bill of recurringBills) {
@@ -376,15 +377,17 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       stop.setAttribute("aria-label", `Arrêter la facture mensuelle ${bill.label}`);
       stop.addEventListener("click", () => stopBill(bill, stop));
       row.append(label, stop); list.append(row);
-      if (bill.start_month > `${financeMonth}-01` || due > today || paidBillIds.has(bill.id)) continue;
+      if (bill.start_month > `${financeMonth}-01` || paidBillIds.has(bill.id)) continue;
       const suggestion = document.createElement("div"); suggestion.className = "bill-row";
       const text = document.createElement("span"); text.textContent = `${bill.label} · ${moneyFormat.format(Number(bill.amount))} · échéance le ${due.slice(8)}`;
-      const add = document.createElement("button"); add.type = "button"; add.className = "save-button"; add.textContent = "Ajouter";
+      const add = document.createElement("button"); add.type = "button"; add.className = "save-button"; add.textContent = due > today ? "Ajouter maintenant" : "Ajouter";
       add.setAttribute("aria-label", `Ajouter la facture ${bill.label} aux dépenses`);
       add.addEventListener("click", () => addBillExpense(bill, due, add));
-      suggestion.append(text, add); suggestions.append(suggestion);
+      suggestion.append(text, add); (due > today ? upcoming : suggestions).append(suggestion);
     }
-    document.querySelector("#bill-status").textContent = !billsReady ? "Chargement des factures…" : suggestions.children.length ? "À confirmer : ces factures ne sont pas encore dans tes dépenses." : "Aucune facture en attente pour cette période.";
+    upcomingSection.hidden = !upcoming.children.length;
+    upcomingSection.querySelector("summary").textContent = `Factures à venir (${upcoming.children.length})`;
+    document.querySelector("#bill-status").textContent = !billsReady ? "Chargement des factures…" : suggestions.children.length ? "À confirmer : ces factures ne sont pas encore dans tes dépenses." : upcoming.children.length ? "Tu peux ajouter tes prochaines factures sans attendre leur échéance." : "Aucune facture en attente pour cette période.";
   }
   async function changeBill(button, action, success, onSuccess = () => {}) {
     const month = financeMonth, planner = plannerId;

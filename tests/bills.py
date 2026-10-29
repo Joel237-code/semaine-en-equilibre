@@ -1,5 +1,6 @@
 """Browser flow with simulated Supabase; no real database access."""
 import json
+from datetime import datetime, timezone
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -20,7 +21,7 @@ export function createClient(){return {
  if(table==='planner_members')data=[{planner_id:'p',role:'member'}];
  if(table==='planner_monthly_budgets')data=null;
  if(table==='planner_recurring_bills'){
- if(mode==='insert')bills.push({...value,id:'bill-1',active:true});
+ if(mode==='insert')bills.push({...value,id:'bill-'+(bills.length+1),active:true});
  if(mode==='update')bills.find(b=>b.id===filters.id).active=false;
  data=bills.filter(b=>b.active);
  }
@@ -38,6 +39,7 @@ try:
   b=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox'])
   page=b.new_page(viewport={'width':390,'height':844});errors=[]
   page.on('pageerror',lambda e:errors.append(str(e)))
+  page.clock.install(time=datetime(2026,10,15,12,tzinfo=timezone.utc))
   page.route('https://cdn.jsdelivr.net/**',lambda r:r.fulfill(body=module,content_type='application/javascript'))
   page.route('https://fonts.googleapis.com/**',lambda r:r.abort())
   page.goto(f'http://127.0.0.1:{server.server_port}/',wait_until='networkidle')
@@ -60,7 +62,20 @@ try:
   page.locator('#bill-list button').click()
   page.wait_for_function("document.querySelector('#bill-list').children.length===0")
   assert page.locator('#bill-suggestions .bill-row').count()==0
+  page.locator('#bill-label').fill('Internet à venir');page.locator('#bill-amount').fill('60');page.locator('#bill-day').fill('28')
+  page.locator('#bill-form button').click()
+  page.locator('#upcoming-bills').wait_for()
+  assert page.locator('#bill-suggestions .bill-row').count()==0
+  page.locator('#upcoming-bills summary').click()
+  early=page.locator('#bill-upcoming .bill-row')
+  assert 'Internet à venir' in early.inner_text()
+  assert early.locator('button').inner_text()=='Ajouter maintenant'
+  early.locator('button').click()
+  page.wait_for_function("document.querySelector('#expenses-total').textContent.includes('60')")
+  assert page.locator('#bill-upcoming .bill-row').count()==0
+  assert '28' in page.locator('#expense-list .expense-details small').inner_text()
+  assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
   assert not errors,errors
-  print('PASS mobile: create monthly bill, due suggestion, confirm expense, no duplicate suggestion, delete expense, stop bill; no remote writes')
+  print('PASS mobile: create monthly bill, due suggestion, confirm expense, no duplicate suggestion, delete expense, stop bill, early addition preserving due date; no remote writes')
   b.close()
 finally: server.shutdown()

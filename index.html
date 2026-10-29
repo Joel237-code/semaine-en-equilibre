@@ -16,8 +16,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=29">
-  <script type="module" src="app.js?v=30"></script>
+  <link rel="stylesheet" href="styles.css?v=30">
+  <script type="module" src="app.js?v=31"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -138,7 +138,7 @@
           </form>
           <form class="finance-form" id="expense-form">
             <h3 id="expense-form-heading">Ajouter une dépense</h3>
-            <div class="bill-suggestions" aria-labelledby="bill-due-heading"><h4 id="bill-due-heading">Factures à ajouter</h4><p id="bill-status" role="status" aria-live="polite"></p><div id="bill-suggestions"></div></div>
+            <div class="bill-suggestions" aria-labelledby="bill-due-heading"><h4 id="bill-due-heading">Factures à ajouter</h4><p id="bill-status" role="status" aria-live="polite"></p><div id="bill-suggestions"></div><details id="upcoming-bills" hidden><summary>Factures à venir</summary><p>Ajoute-les dès maintenant au budget du mois sélectionné. La date d’échéance sera conservée.</p><div id="bill-upcoming"></div></details></div>
             <label class="field-label" for="expense-category">Catégorie</label><select class="text-input" id="expense-category" disabled></select>
             <label class="field-label" for="expense-label">À quoi correspond-elle&nbsp;?</label>
             <input class="text-input" id="expense-label" maxlength="80" placeholder="Ex. Courses" required>
@@ -151,7 +151,7 @@
         </div>
         <details class="bill-settings">
           <summary>Mes factures mensuelles</summary>
-          <p>Enregistre une facture une fois : elle sera proposée chaque mois à partir de son échéance. Aucun débit ni ajout automatique.</p>
+          <p>Enregistre une facture une fois : elle sera proposée chaque mois, avec la possibilité de l’ajouter avant son échéance. Aucun débit ni ajout automatique.</p>
           <p id="bill-setup" hidden>Une configuration est nécessaire pour activer les factures mensuelles. <a href="https://github.com/Joel237-code/semaine-en-equilibre/blob/main/supabase/migrations/20261022000000_add_recurring_bills.sql" target="_blank" rel="noopener">Voir le script de configuration</a>.</p>
           <form id="bill-form" class="finance-form">
             <label class="field-label" for="bill-label">Nom de la facture</label><input class="text-input" id="bill-label" maxlength="80" placeholder="Ex. Électricité" required>
